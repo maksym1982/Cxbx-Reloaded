@@ -38,6 +38,7 @@
 #include "Common/Win32/XBController.h"
 #include "Common/Win32/XBVideo.h"
 #include "Common/Win32/XBAudio.h"
+#include "Common/Win32/XBNetwork.h"
 
 #include <memory.h>
 
@@ -86,6 +87,12 @@ class EmuShared : public Mutex
 		// ******************************************************************
 		void GetXBAudio(      XBAudio *audio) { Lock(); *audio = XBAudio(m_XBAudio); Unlock(); }
 		void SetXBAudio(const XBAudio *audio) { Lock(); m_XBAudio = XBAudio(*audio); Unlock(); }
+
+		// ******************************************************************
+		// * Xbox Network Accessors
+		// ******************************************************************
+		void GetXBNetwork(XBNetwork *network) { Lock(); *network = XBNetwork(m_XBNetwork); Unlock(); }
+		void SetXBNetwork(const XBNetwork *network) { Lock(); m_XBNetwork = XBNetwork(*network); Unlock(); }
 
 		// ******************************************************************
 		// * Xbox Controller Accessors
@@ -191,6 +198,7 @@ class EmuShared : public Mutex
 		XBController m_XBController;
 		XBVideo      m_XBVideo;
 		XBAudio      m_XBAudio;
+		XBNetwork	 m_XBNetwork;
 		char         m_XbePath[MAX_PATH];
 		int			 m_BootFlags;
 		int          m_FlagsLLE;

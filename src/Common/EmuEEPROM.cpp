@@ -188,6 +188,11 @@ xboxkrnl::XBOX_EEPROM *CxbxRestoreEEPROM(char *szFilePath_EEPROM_bin)
 		pEEPROM->UserSettings.MiscFlags = 0;  // No automatic power down
 		pEEPROM->FactorySettings.AVRegion = AV_STANDARD_NTSC_M | AV_FLAGS_60Hz;
 		pEEPROM->EncryptedSettings.GameRegion = XC_GAME_REGION_NA;
+		memset(pEEPROM->FactorySettings.SerialNumber, '9', 12);
+		// TODO: Generate a random mac & online key to keep each user unique?
+		uint8_t macAddress[6] = { 0x00, 0x50, 0xF2, 0x00, 0x00, 0x34 };
+		memcpy(pEEPROM->FactorySettings.EthernetAddr, macAddress, 6);
+
 		xboxkrnl::XcHMAC(xboxkrnl::XboxEEPROMKey, 16, pEEPROM->EncryptedSettings.Confounder, 8, pEEPROM->EncryptedSettings.HDKey, 20,
 			pEEPROM->EncryptedSettings.Checksum);
 

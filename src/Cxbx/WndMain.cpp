@@ -37,6 +37,7 @@
 #include "DlgAbout.h"
 #include "DlgControllerConfig.h"
 #include "DlgVideoConfig.h"
+#include "DlgNetworkConfig.h"
 #include "DlgAudioConfig.h"
 #include "DlgEepromConfig.h"
 #include "Common/XbePrinter.h" // For DumpInformation
@@ -1139,6 +1140,10 @@ LRESULT CALLBACK WndMain::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lP
                 ShowAudioConfig(hwnd);
                 break;
 
+			case ID_SETTINGS_CONFIG_NETWORK:
+				ShowNetworkConfig(hwnd);
+				break;
+
 			case ID_SETTINGS_CONFIG_EEPROM:
 			{
 				if (m_bIsStarted) {
@@ -1806,7 +1811,7 @@ void WndMain::RefreshMenus()
 
 			chk_flag = (m_SkipRdtscPatching) ? MF_CHECKED : MF_UNCHECKED;
 			CheckMenuItem(settings_menu, ID_HACKS_SKIPRDTSCPATCHING, chk_flag);
-      
+
 			chk_flag = (m_ScaleViewport) ? MF_CHECKED : MF_UNCHECKED;
 			CheckMenuItem(settings_menu, ID_HACKS_SCALEVIEWPORT, chk_flag);
 		}

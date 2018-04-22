@@ -14,6 +14,7 @@
 #define IDR_JPEG_ABOUT                  116
 #define IDR_JPEG_SPLASH                 118
 #define IDD_ABOUT                       119
+#define IDD_NETWORK_CFG                 120
 #define IDR_CONTRIBUTORS                121
 #define IDR_COPYING                     122
 #define IDS_UEM                         123
@@ -133,9 +134,11 @@
 #define ID_EMULATION_STARTDEBUGGER      40092
 #define ID_FPS                          40096
 #define ID_HACKS_UNCAPFRAMERATE         40097
-#define ID_HACKS_RUNXBOXTHREADSONALLCORES 40098
-#define ID_HACKS_SKIPRDTSCPATCHING      40099
+#define ID_HACKS_RUNXBOXTHREADSONALLCORES         40098
+#define ID_HACKS_SKIPRDTSCPATCHING         40099
 #define ID_HACKS_SCALEVIEWPORT          40100
+#define ID_SETTINGS_CONFIG_NETWORK      40101
+#define IDC_NETWORK_ADAPTER      40102
 #define IDC_STATIC                      -1
 
 // Next default values for new objects
@@ -143,8 +146,8 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        131
-#define _APS_NEXT_COMMAND_VALUE         40097
-#define _APS_NEXT_CONTROL_VALUE         1058
+#define _APS_NEXT_COMMAND_VALUE         40103
+#define _APS_NEXT_CONTROL_VALUE         1061
 #define _APS_NEXT_SYMED_VALUE           104
 #endif
 #endif

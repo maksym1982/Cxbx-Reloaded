@@ -19,7 +19,8 @@ We now boot more titles than ever before, with more and more reaching gameplay.
   * OS: Windows 7+ x64. 32-bit installations are not supported.
   * GPU: Anything that supports Direct3D 9 (HLE) and OpenGL 3.3 (LLE).
 ### Prerequisites
-  * Visual C++ 2015 and 2017 redistributables may be required. Download them [here](https://support.microsoft.com/en-gb/help/2977003/the-latest-supported-visual-c-downloads).
+  * Visual C++ 2015 and 2017 redistributables: Download them [here](https://support.microsoft.com/en-gb/help/2977003/the-latest-supported-visual-c-downloads).
+  * Npcap (Used for Network emulation): Download the Installer [here](https://nmap.org/npcap/#download). Make sure to enable winpcap compatibility mode!
   
 ## Automated Builds
 Cxbx-Reloaded is not yet ready for general release, but the latest development builds can be downloaded from our [AppVeyor](https://ci.appveyor.com/project/SoullessSentinel/cxbx-reloaded/branch/master):

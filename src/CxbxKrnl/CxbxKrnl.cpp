@@ -577,6 +577,15 @@ void PrintCurrentConfigurationLog()
 		printf("Unknown Codec is %s\n", XBAudioConf.GetUnknownCodec() ? "enabled" : "disabled");
 	}
 
+	// Print current network configuration
+	{
+		XBNetwork XBNetworkConf;
+		g_EmuShared->GetXBNetwork(&XBNetworkConf);
+
+		printf("--------------------------- NETWORK CONFIG ---------------------------\n");
+		printf("Network Adapter Name: %s\n", XBNetworkConf.GetNetworkAdapter() == "" ? "Not Configured" : XBNetworkConf.GetNetworkAdapter().c_str());
+	}
+
 	// Print Enabled Hacks
 	{
 		printf("--------------------------- HACKS CONFIG ---------------------------\n");
