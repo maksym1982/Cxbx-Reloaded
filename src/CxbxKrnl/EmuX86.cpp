@@ -44,9 +44,14 @@
 #include "HLEIntercept.h" // for bLLE_GPU
 
 #include <assert.h>
+#include <unordered_map>
 #include "devices\Xbox.h" // For g_PCIBus
+#include "ld32.h"
 
 extern uint32_t GetAPUTime();
+std::unordered_map<DWORD, uc_engine*> g_UnicornHandles;
+uc_engine* uc;
+void* xbeMirror = nullptr;
 
 //
 // Read & write handlers handlers for I/O
@@ -244,12 +249,97 @@ static void hook_out_cb(uc_engine *uc, uint32_t port, int size, uint32_t value, 
 	EmuX86_IOWrite(port, value, size);
 }
 
+static void hook_unmapped_cb(uc_engine *uc, uc_mem_type type, uint64_t address, uint32_t size, int64_t value, void *user_data)
+{
+	EmuWarning("Unmapped Memory Access @ 0x%08X", address);
+}
+
 uc_engine* EmuX86_Init();
+
+// This is the format of X86 registers on the stack after call and pushad
+typedef struct {
+	uint32_t Edi;
+	uint32_t Esi;
+	uint32_t Ebp;
+	uint32_t Esp;
+	uint32_t Ebx;
+	uint32_t Edx;
+	uint32_t Ecx;
+	uint32_t Eax;
+	uint32_t EFlags;
+	uint32_t Eip;
+}x86_reg_dump;
+
+void WINAPI EmuX86_ExecWithUnicorn(x86_reg_dump* regs)
+{
+	uc_engine* uc = EmuX86_Init();
+
+	// Adjust ESP to account for the call
+	regs->Esp += 4;
+
+	// Adjust EIP as it points to the next instruction, not the current...
+	regs->Eip -= 5; // Sizeof call instruction
+	
+	// Sync CPU state to Unicorn
+	uc_reg_write(uc, UC_X86_REG_EDI, &regs->Edi);
+	uc_reg_write(uc, UC_X86_REG_ESI, &regs->Esi);
+	uc_reg_write(uc, UC_X86_REG_EBX, &regs->Ebx);
+	uc_reg_write(uc, UC_X86_REG_EDX, &regs->Edx);
+	uc_reg_write(uc, UC_X86_REG_ECX, &regs->Ecx);
+	uc_reg_write(uc, UC_X86_REG_EAX, &regs->Eax);
+	uc_reg_write(uc, UC_X86_REG_EIP, &regs->Eip);
+	uc_reg_write(uc, UC_X86_REG_ESP, &regs->Esp);
+	uc_reg_write(uc, UC_X86_REG_EBP, &regs->Ebp);
+	uc_reg_write(uc, UC_X86_REG_EFLAGS, &regs->EFlags);
+	
+	uc_err err = uc_emu_start(uc, regs->Eip, 0, 0, 1);
+	if (err) {
+		CxbxKrnlCleanup("Failed on uc_emu_start() with error returned: %u\n", err);
+	}
+
+	// Write CPU state back to regs struct
+	uc_reg_read(uc, UC_X86_REG_EDI, &regs->Edi);
+	uc_reg_read(uc, UC_X86_REG_ESI, &regs->Esi);
+	uc_reg_read(uc, UC_X86_REG_EBX, &regs->Ebx);
+	uc_reg_read(uc, UC_X86_REG_EDX, &regs->Edx);
+	uc_reg_read(uc, UC_X86_REG_ECX, &regs->Ecx);
+	uc_reg_read(uc, UC_X86_REG_EAX, &regs->Eax);
+	uc_reg_read(uc, UC_X86_REG_EIP, &regs->Eip);
+	uc_reg_read(uc, UC_X86_REG_ESP, &regs->Esp);
+	uc_reg_read(uc, UC_X86_REG_EBP, &regs->Ebp);
+	uc_reg_read(uc, UC_X86_REG_EFLAGS, &regs->EFlags);
+
+	regs->Esp -= 4;
+}
+
+
+void __declspec(naked) EmuX86_UnicornPatchHandler()
+{
+	__asm {
+		pushfd	// Backup EFLAGS
+		pushad	// backup all registers to stack
+		push esp; // Pass a pointer to the x86_reg_dump struct (located on the stack)
+		call EmuX86_ExecWithUnicorn;
+		popad	// Restore registers
+		popfd
+		ret	// Return to execution
+	}
+}
+
 bool EmuX86_DecodeException(LPEXCEPTION_POINTERS e)
 {
 	// Only decode instructions which reside in the loaded Xbe
 	if (e->ContextRecord->Eip > XBE_MAX_VA || e->ContextRecord->Eip < XBE_IMAGE_BASE) {
 		return false;
+	}
+
+	// TODO: Fix shorter opcode sequences
+
+	if (length_disasm((void*)e->ContextRecord->Eip) >= 5) {
+		xbaddr addr = e->ContextRecord->Eip;
+		*(uint8_t*)addr = OPCODE_CALL_E8;
+		*(uint32_t*)(addr + 1) = (uint32_t)EmuX86_UnicornPatchHandler - addr - 5;
+		return true;
 	}
 
 	uc_engine* uc = EmuX86_Init();
@@ -266,10 +356,6 @@ bool EmuX86_DecodeException(LPEXCEPTION_POINTERS e)
 	uc_reg_write(uc, UC_X86_REG_EBP, &e->ContextRecord->Ebp);
 	uc_reg_write(uc, UC_X86_REG_EFLAGS, &e->ContextRecord->EFlags);
 
-	// Run Unicorn for one instruction
-	// NOTE: This is currently slightly slower than old EmuX86, but has potential to be massively optimised
-	// It's a lot of work, but we can get much higher performance through clever use of Unicorn (and avoiding exceptions)
-	// This does not count as clever use, but is a test to see how well it works for us
 	uc_err err = uc_emu_start(uc, e->ContextRecord->Eip, 0, 0, 1);
 	if (err) {
 		CxbxKrnlCleanup("Failed on uc_emu_start() with error returned: %u\n", err);
@@ -286,18 +372,24 @@ bool EmuX86_DecodeException(LPEXCEPTION_POINTERS e)
 	uc_reg_read(uc, UC_X86_REG_ESP, &e->ContextRecord->Esp);
 	uc_reg_read(uc, UC_X86_REG_EBP, &e->ContextRecord->Ebp);
 	uc_reg_read(uc, UC_X86_REG_EFLAGS, &e->ContextRecord->EFlags);
-	
+
 	return true;
 }
 
-#include <unordered_map>
-std::unordered_map<DWORD, uc_engine*> g_UnicornHandles;
+// Write to Unicorn virtual address space
+void EmuX86_Unicorn_Write(xbaddr addr, void* ptr, int size)
+{
+	if (xbeMirror == nullptr) {
+		xbeMirror = malloc(XBE_MAX_VA);
+	}
+
+	memcpy((uint8_t*)(xbeMirror)+addr, ptr, size);
+}
 
 // Unicorn requires a seperate context per-thread, we handle that by using EmuX86_Init as a GetUnicornContext function
 uc_engine* EmuX86_Init()
 {
-	uc_engine* uc;
-	uc_hook hook_in, hook_out;
+	uc_hook hook_in, hook_out, hook_unmapped;
 
 	// First, attempt to fetch a uncorn instance for the current thread
 	auto it = g_UnicornHandles.find(GetCurrentThreadId());
@@ -311,14 +403,19 @@ uc_engine* EmuX86_Init()
 		CxbxKrnlCleanup("Failed on uc_open() with error returned: %u\n", err);
 	}
 
-	// Set Unicorn to map 1:1 with our emulated Xbox memory (except HW registers)
-	// We should map this to 0x0 but unicorn doesn't like that (it can't take a nullptr as an argument)
-	// Mapping to the XBE base address is good enough
-	err = uc_mem_map_ptr(uc, XBE_IMAGE_BASE, 0xFD000000 - XBE_IMAGE_BASE, UC_PROT_ALL, (void*)XBE_IMAGE_BASE); // XBE Region (0x00000000)
+	// Map Xbe space memory into unicorn
+	err = uc_mem_map_ptr(uc, 0, XBE_MAX_VA, UC_PROT_ALL, (void*)xbeMirror);
+	if (err) {
+		CxbxKrnlCleanup("Failed on uc_mem_map_ptr(uc, 0, XBE_MAX_VA, UC_PROT_ALL, (void*)xbeMirror); with error returned: %u\n", err);
+	}
+
+	// Set Unicorn to map 1:1 with our emulated Xbox memory (except XBE Space & HW registers)
+	// XBE Space is handled by writing an unpatched Xbe into Unicorn's address space
+	err = uc_mem_map_ptr(uc, XBE_MAX_VA, 0xFD000000 - XBE_MAX_VA, UC_PROT_ALL, (void*)XBE_MAX_VA);
 	if (err) {
 		CxbxKrnlCleanup("Failed on uc_mem_map_ptr(uc, 0, XBOX_MEMORY_SIZE, UC_PROT_ALL, 0) with error returned: %u\n", err);
 	}
-	
+
 	// Register MMIO and IO Hooks
 	err = uc_mmio_map(uc, 0xFD000000, 0x3000000, read_cb, write_cb, nullptr);
 	if (err) {
@@ -335,6 +432,11 @@ uc_engine* EmuX86_Init()
 		CxbxKrnlCleanup("Failed on uc_hook_add() with error returned: %u\n", err);
 	}
 
+	// Log unmapped MMIO
+	err = uc_hook_add(uc, &hook_unmapped, UC_HOOK_MEM_UNMAPPED, hook_unmapped_cb, NULL, 1, 0);
+	if (err) {
+		CxbxKrnlCleanup("Failed on uc_hook_add() with error returned: %u\n", err);
+	}
 
 	g_UnicornHandles[GetCurrentThreadId()] = uc;
 

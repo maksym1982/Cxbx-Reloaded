@@ -63,4 +63,5 @@ uint32_t EmuX86_IORead(xbaddr addr, int size);
 void EmuX86_IOWrite(xbaddr addr, uint32_t value, int size);
 uint32_t EmuX86_Read(xbaddr addr, int size);
 void EmuX86_Write(xbaddr addr, uint32_t value, int size);
+void EmuX86_Unicorn_Write(xbaddr addr, void* ptr, int size);
 #endif

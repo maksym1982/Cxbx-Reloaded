@@ -278,6 +278,7 @@
     <ClCompile Include="..\..\src\CxbxKrnl\EmuRsa.cpp">
       <Filter>Emulator</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\CxbxKrnl\ld32.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Cxbx\DlgControllerConfig.h">
@@ -550,6 +551,7 @@
     <ClInclude Include="..\..\src\CxbxKrnl\EmuRsa.h">
       <Filter>Emulator</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\CxbxKrnl\ld32.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\resource\Splash.jpg">

@@ -49,6 +49,7 @@ namespace xboxkrnl
 #include "EmuKrnlLogging.h"
 #include "Emu.h" // For EmuWarning()
 #include "VMManager.h"
+#include "EmuX86.h"
 
 // ******************************************************************
 // * 0x0146 - XeImageFileName
@@ -89,6 +90,7 @@ XBSYSAPI EXPORTNUM(327) xboxkrnl::NTSTATUS NTAPI xboxkrnl::XeLoadSection
 			memset(Section->VirtualAddress, 0, Section->VirtualSize);
 			// Copy the section data
 			memcpy(Section->VirtualAddress, sectionData, Section->FileSize);
+			EmuX86_Unicorn_Write((xbaddr)Section->VirtualAddress, sectionData, Section->FileSize);
 
 			// REMARK: Some titles have sections less than PAGE_SIZE, which will cause an overlap with the next section
 			// since both will have the same aligned starting address.
@@ -100,6 +102,7 @@ XBSYSAPI EXPORTNUM(327) xboxkrnl::NTSTATUS NTAPI xboxkrnl::XeLoadSection
 			size_t SectionSize = (VAddr)Section->VirtualSize;
 
 			ret = g_VMManager.XbAllocateVirtualMemory(&BaseAddress, 0, &SectionSize, XBOX_MEM_COMMIT, XBOX_PAGE_EXECUTE_READWRITE);
+
 
 			// Increment the head/tail page reference counters
 			(*Section->HeadReferenceCount)++;
