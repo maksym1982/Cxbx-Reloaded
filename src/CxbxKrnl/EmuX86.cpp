@@ -251,13 +251,77 @@ static void hook_out_cb(uc_engine *uc, uint32_t port, int size, uint32_t value, 
 
 static void hook_unmapped_cb(uc_engine *uc, uc_mem_type type, uint64_t address, uint32_t size, int64_t value, void *user_data)
 {
-	EmuWarning("Unmapped Memory Access @ 0x%08X", address);
+	uint32_t eip;
+	uc_reg_read(uc, UC_X86_REG_EIP, &eip);
+	EmuWarning("EIP: 0x%08X: Unmapped Memory Access 0x%08X", eip, address);
+	
+	uc_emu_stop(uc);
 }
 
 uc_engine* EmuX86_Init();
 
-// This is the format of X86 registers on the stack after call and pushad
+#pragma pack(push, 1)
 typedef struct {
+	union {
+		struct {
+			unsigned short limit0;
+			unsigned short base0;
+			unsigned char base1;
+			unsigned char type : 4;
+			unsigned char system : 1;      /* S flag */
+			unsigned char dpl : 2;
+			unsigned char present : 1;     /* P flag */
+			unsigned char limit1 : 4;
+			unsigned char avail : 1;
+			unsigned char is_64_code : 1;  /* L flag */
+			unsigned char db : 1;          /* DB flag */
+			unsigned char granularity : 1; /* G flag */
+			unsigned char base2;
+		};
+		uint64_t desc;
+	};
+} SegmentDescriptor;
+#pragma pack(pop)
+
+#define SEGBASE(d) ((uint32_t)((((d).desc >> 16) & 0xffffff) | (((d).desc >> 32) & 0xff000000)))
+#define SEGLIMIT(d) ((d).limit0 | (((unsigned int)(d).limit1) << 16))
+
+static void init_descriptor(SegmentDescriptor *desc, uint32_t base, uint32_t limit, uint8_t is_code)
+{
+	desc->desc = 0;  //clear the descriptor
+	desc->base0 = base & 0xffff;
+	desc->base1 = (base >> 16) & 0xff;
+	desc->base2 = base >> 24;
+	if (limit > 0xfffff) {
+		//need Giant granularity
+		limit >>= 12;
+		desc->granularity = 1;
+
+	}
+
+	desc->limit0 = limit & 0xffff;
+	desc->limit1 = limit >> 16;
+
+	//some sane defaults
+	desc->dpl = 3;
+	desc->present = 1;
+	desc->db = 1;   //32 bit
+	desc->type = is_code ? 0xb : 3;
+	desc->system = 1;  //code or data
+}
+
+SegmentDescriptor gdt[32];
+uc_x86_mmr gdtr;
+
+void EmuX86_SetupGDT(uc_engine* uc)
+{
+
+}
+
+// This is the format of X86 registers on the stack
+// Contains a large buffer as this is temporarily used as an actual stack!
+typedef struct {
+	uint8_t stackData[ONE_MB];
 	uint32_t Edi;
 	uint32_t Esi;
 	uint32_t Ebp;
@@ -267,62 +331,150 @@ typedef struct {
 	uint32_t Ecx;
 	uint32_t Eax;
 	uint32_t EFlags;
-	uint32_t Eip;
 }x86_reg_dump;
 
-void WINAPI EmuX86_ExecWithUnicorn(x86_reg_dump* regs)
+using X87Register = uint8_t[10];
+
+// This is the format of FPU/MMX/SSE state as-saved by the FXSAVE opcode
+using XMMRegister = uint8_t[16];
+typedef struct {
+	uint16_t fcw;  // FPU control word
+	uint16_t fsw;  // FPU status word
+	uint8_t ftw;  // abridged FPU tag word
+	uint8_t reserved_1;
+	uint16_t fop;  // FPU opcode
+	uint32_t fpu_ip;  // FPU instruction pointer offset
+	uint16_t fpu_cs;  // FPU instruction pointer segment selector
+	uint16_t reserved_2;
+	uint32_t fpu_dp;  // FPU data pointer offset
+	uint16_t fpu_ds;  // FPU data pointer segment selector
+	uint16_t reserved_3;
+	uint32_t mxcsr;  // multimedia extensions status and control register
+	uint32_t mxcsr_mask;  // valid bits in mxcsr
+	X87Register st[8];
+} fpu_reg_dump;
+
+// Temporary X86 state & stack
+// Because this is NOT thread safe, we use a lock to make sure only one thread runs unicorn at a time
+// This is the a trade-off between performance and stability
+x86_reg_dump x86_regs;
+fpu_reg_dump fpu_regs;
+uint32_t baseEip;
+uint32_t baseEsp;
+uint32_t returnEip;
+uint32_t returnEsp;
+
+void WINAPI EmuX86_ExecWithUnicorn()
 {
 	uc_engine* uc = EmuX86_Init();
 
-	// Adjust ESP to account for the call
-	regs->Esp += 4;
+	baseEip -= 5; // Subtract call opcode size from return address, giving us the correct base
 
-	// Adjust EIP as it points to the next instruction, not the current...
-	regs->Eip -= 5; // Sizeof call instruction
-	
+	EmuX86_SetupGDT(uc);
+
 	// Sync CPU state to Unicorn
-	uc_reg_write(uc, UC_X86_REG_EDI, &regs->Edi);
-	uc_reg_write(uc, UC_X86_REG_ESI, &regs->Esi);
-	uc_reg_write(uc, UC_X86_REG_EBX, &regs->Ebx);
-	uc_reg_write(uc, UC_X86_REG_EDX, &regs->Edx);
-	uc_reg_write(uc, UC_X86_REG_ECX, &regs->Ecx);
-	uc_reg_write(uc, UC_X86_REG_EAX, &regs->Eax);
-	uc_reg_write(uc, UC_X86_REG_EIP, &regs->Eip);
-	uc_reg_write(uc, UC_X86_REG_ESP, &regs->Esp);
-	uc_reg_write(uc, UC_X86_REG_EBP, &regs->Ebp);
-	uc_reg_write(uc, UC_X86_REG_EFLAGS, &regs->EFlags);
+	uc_reg_write(uc, UC_X86_REG_EDI, &x86_regs.Edi);
+	uc_reg_write(uc, UC_X86_REG_ESI, &x86_regs.Esi);
+	uc_reg_write(uc, UC_X86_REG_EBX, &x86_regs.Ebx);
+	uc_reg_write(uc, UC_X86_REG_EDX, &x86_regs.Edx);
+	uc_reg_write(uc, UC_X86_REG_ECX, &x86_regs.Ecx);
+	uc_reg_write(uc, UC_X86_REG_EAX, &x86_regs.Eax);
+	uc_reg_write(uc, UC_X86_REG_EIP, &baseEip);
+	uc_reg_write(uc, UC_X86_REG_ESP, &baseEsp);
+	uc_reg_write(uc, UC_X86_REG_EBP, &x86_regs.Ebp);
+	uc_reg_write(uc, UC_X86_REG_EFLAGS, &x86_regs.EFlags);
+
+	// Sync FPU State
+	uc_reg_write(uc, UC_X86_REG_FPCW, &fpu_regs.fcw);
+	uc_reg_write(uc, UC_X86_REG_FPSW, &fpu_regs.fsw);
+	uc_reg_write(uc, UC_X86_REG_FPTAG, &fpu_regs.ftw);	
+	for (int i = 0; i < 8; i++) {
+		uc_reg_write(uc, UC_X86_REG_FP0 + i, &fpu_regs.st[i]);
+	}
 	
-	uc_err err = uc_emu_start(uc, regs->Eip, 0, 0, 1);
+
+	uc_err err = uc_emu_start(uc, baseEip, 0, 0, 1);
 	if (err) {
 		CxbxKrnlCleanup("Failed on uc_emu_start() with error returned: %u\n", err);
 	}
 
 	// Write CPU state back to regs struct
-	uc_reg_read(uc, UC_X86_REG_EDI, &regs->Edi);
-	uc_reg_read(uc, UC_X86_REG_ESI, &regs->Esi);
-	uc_reg_read(uc, UC_X86_REG_EBX, &regs->Ebx);
-	uc_reg_read(uc, UC_X86_REG_EDX, &regs->Edx);
-	uc_reg_read(uc, UC_X86_REG_ECX, &regs->Ecx);
-	uc_reg_read(uc, UC_X86_REG_EAX, &regs->Eax);
-	uc_reg_read(uc, UC_X86_REG_EIP, &regs->Eip);
-	uc_reg_read(uc, UC_X86_REG_ESP, &regs->Esp);
-	uc_reg_read(uc, UC_X86_REG_EBP, &regs->Ebp);
-	uc_reg_read(uc, UC_X86_REG_EFLAGS, &regs->EFlags);
+	uc_reg_read(uc, UC_X86_REG_EDI, &x86_regs.Edi);
+	uc_reg_read(uc, UC_X86_REG_ESI, &x86_regs.Esi);
+	uc_reg_read(uc, UC_X86_REG_EBX, &x86_regs.Ebx);
+	uc_reg_read(uc, UC_X86_REG_EDX, &x86_regs.Edx);
+	uc_reg_read(uc, UC_X86_REG_ECX, &x86_regs.Ecx);
+	uc_reg_read(uc, UC_X86_REG_EAX, &x86_regs.Eax);
+	uc_reg_read(uc, UC_X86_REG_EIP, &returnEip);
+	uc_reg_read(uc, UC_X86_REG_ESP, &returnEsp);
+	uc_reg_read(uc, UC_X86_REG_EBP, &x86_regs.Ebp);
+	uc_reg_read(uc, UC_X86_REG_EFLAGS, &x86_regs.EFlags);
 
-	regs->Esp -= 4;
+	// Sync FPU State
+	uc_reg_read(uc, UC_X86_REG_FPCW, &fpu_regs.fcw);
+	uc_reg_read(uc, UC_X86_REG_FPSW, &fpu_regs.fsw);
+	uc_reg_read(uc, UC_X86_REG_FPTAG, &fpu_regs.ftw);
+	for (int i = 0; i < 8; i++) {
+		uc_reg_read(uc, UC_X86_REG_FP0 + i, &fpu_regs.st[i]);
+	}
 }
 
+// Spinlock implementation that is completely invisible to the caller
+static int EmuX86_UnicornLock = 0; 
+void __declspec(naked) EmuX86_LockUnicorn()
+{
+	__asm {
+		pushfd
+		pushad
+	spinlock:
+		mov eax, 1
+		xchg eax, EmuX86_UnicornLock
+		test eax, eax
+		jnz spinlock
+		popad
+		popfd
+		ret
+	}
+}
+
+void __declspec(naked) EmuX86_UnlockUnicorn()
+{
+	__asm {
+		pushfd
+		pushad
+		xor eax, eax
+		xchg eax, EmuX86_UnicornLock
+		popad
+		popfd
+		ret
+	}
+}
 
 void __declspec(naked) EmuX86_UnicornPatchHandler()
 {
 	__asm {
-		pushfd	// Backup EFLAGS
-		pushad	// backup all registers to stack
-		push esp; // Pass a pointer to the x86_reg_dump struct (located on the stack)
+		call EmuX86_LockUnicorn	// Lock Unicorn instance
+
+		pop baseEip	// Save EIP that we need to return to, this is used to calculate the start eip of a block
+		mov baseEsp, esp // Backup stack pointer
+		lea esp, [x86_regs + (ONE_MB + 36)] // Make the stack point to our replacment stack, containing an regs struct
+			
+		// Call the Unicorn handler, ab(using) our fake stack to sync vcpu state
+		fsave fpu_regs	// Save the FPU state
+		pushfd	
+		pushad
 		call EmuX86_ExecWithUnicorn;
-		popad	// Restore registers
+		popad	
 		popfd
-		ret	// Return to execution
+		frstor fpu_regs // Restore the FPU state
+
+		call EmuX86_UnlockUnicorn // Unlock Unicorn instance
+
+		
+		mov esp, returnEsp	// Reset the stack pointer to the one returned by unicorn
+		push returnEip;	// Make sure we return to the start of the next code block
+	
+		ret
 	}
 }
 
@@ -333,46 +485,9 @@ bool EmuX86_DecodeException(LPEXCEPTION_POINTERS e)
 		return false;
 	}
 
-	// TODO: Fix shorter opcode sequences
-
-	if (length_disasm((void*)e->ContextRecord->Eip) >= 5) {
-		xbaddr addr = e->ContextRecord->Eip;
-		*(uint8_t*)addr = OPCODE_CALL_E8;
-		*(uint32_t*)(addr + 1) = (uint32_t)EmuX86_UnicornPatchHandler - addr - 5;
-		return true;
-	}
-
-	uc_engine* uc = EmuX86_Init();
-
-	// Sync CPU state to Unicorn
-	uc_reg_write(uc, UC_X86_REG_EDI, &e->ContextRecord->Edi);
-	uc_reg_write(uc, UC_X86_REG_ESI, &e->ContextRecord->Esi);
-	uc_reg_write(uc, UC_X86_REG_EBX, &e->ContextRecord->Ebx);
-	uc_reg_write(uc, UC_X86_REG_EDX, &e->ContextRecord->Edx);
-	uc_reg_write(uc, UC_X86_REG_ECX, &e->ContextRecord->Ecx);
-	uc_reg_write(uc, UC_X86_REG_EAX, &e->ContextRecord->Eax);
-	uc_reg_write(uc, UC_X86_REG_EIP, &e->ContextRecord->Eip);
-	uc_reg_write(uc, UC_X86_REG_ESP, &e->ContextRecord->Esp);
-	uc_reg_write(uc, UC_X86_REG_EBP, &e->ContextRecord->Ebp);
-	uc_reg_write(uc, UC_X86_REG_EFLAGS, &e->ContextRecord->EFlags);
-
-	uc_err err = uc_emu_start(uc, e->ContextRecord->Eip, 0, 0, 1);
-	if (err) {
-		CxbxKrnlCleanup("Failed on uc_emu_start() with error returned: %u\n", err);
-	}
-
-	// Write CPU state back to host
-	uc_reg_read(uc, UC_X86_REG_EDI, &e->ContextRecord->Edi);
-	uc_reg_read(uc, UC_X86_REG_ESI, &e->ContextRecord->Esi);
-	uc_reg_read(uc, UC_X86_REG_EBX, &e->ContextRecord->Ebx);
-	uc_reg_read(uc, UC_X86_REG_EDX, &e->ContextRecord->Edx);
-	uc_reg_read(uc, UC_X86_REG_ECX, &e->ContextRecord->Ecx);
-	uc_reg_read(uc, UC_X86_REG_EAX, &e->ContextRecord->Eax);
-	uc_reg_read(uc, UC_X86_REG_EIP, &e->ContextRecord->Eip);
-	uc_reg_read(uc, UC_X86_REG_ESP, &e->ContextRecord->Esp);
-	uc_reg_read(uc, UC_X86_REG_EBP, &e->ContextRecord->Ebp);
-	uc_reg_read(uc, UC_X86_REG_EFLAGS, &e->ContextRecord->EFlags);
-
+	xbaddr addr = e->ContextRecord->Eip;
+	*(uint8_t*)addr = OPCODE_CALL_E8;
+	*(uint32_t*)(addr + 1) = (uint32_t)EmuX86_UnicornPatchHandler - addr - 5;
 	return true;
 }
 
@@ -404,7 +519,7 @@ uc_engine* EmuX86_Init()
 	}
 
 	// Map Xbe space memory into unicorn
-	err = uc_mem_map_ptr(uc, 0, XBE_MAX_VA, UC_PROT_ALL, (void*)xbeMirror);
+	err = uc_mem_map_ptr(uc, XBE_IMAGE_BASE, XBE_MAX_VA - XBE_IMAGE_BASE, UC_PROT_ALL, (void*)((xbaddr)xbeMirror + XBE_IMAGE_BASE));
 	if (err) {
 		CxbxKrnlCleanup("Failed on uc_mem_map_ptr(uc, 0, XBE_MAX_VA, UC_PROT_ALL, (void*)xbeMirror); with error returned: %u\n", err);
 	}

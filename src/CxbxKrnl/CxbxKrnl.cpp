@@ -931,8 +931,10 @@ void CxbxKrnlMain(int argc, char* argv[])
 		int i = 0;
 		while (kt_tbl[i] != 0) {
 			int t = kt_tbl[i] & 0x7FFFFFFF;
-            
 			kt_tbl[i] = CxbxKrnl_KernelThunkTable[t];
+
+			// Unicorn also needs to see the kernel thunk patch, so we perform the same patch in Unicorn space
+			EmuX86_Unicorn_Write((xbaddr)(&kt_tbl[i]), &CxbxKrnl_KernelThunkTable[t], 4);
 
             if (SendDebugReports)
             {
