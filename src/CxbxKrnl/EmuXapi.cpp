@@ -384,19 +384,23 @@ DWORD WINAPI XTL::EMUPATCH(XGetDevices)
 */
     int index = FindDeviceInfoIndexByDeviceType(DeviceType);
     int port;
-    if (DeviceType->CurrentConnected == 0) {
-        for (port = 0; port < 4; port++) {
-            //if the host controller is connected and the xbox DeviceType matches. set the CurrentConnected flag.
-            if (g_XboxControllerHostBridge[port].XboxDeviceInfo.DeviceType == DeviceType && g_XboxControllerHostBridge[port].dwHostType>0) {
-                DeviceType->CurrentConnected |= 1 << port;
-            }
-        }
+    for (port = 0; port < 4; port++) {
+        //if the host controller is connected and the xbox DeviceType matches. set the CurrentConnected flag.
+        if (g_XboxControllerHostBridge[port].XboxDeviceInfo.DeviceType == DeviceType && g_XboxControllerHostBridge[port].dwHostType>0) {
+            DeviceType->CurrentConnected |= (1 << port);
+		}	else {
+			DeviceType->CurrentConnected &= ~(1 << port);
+		}
     }
+
+	DeviceType->ChangeConnected = DeviceType->PreviousConnected ^ DeviceType->CurrentConnected;
+   
 	// JSRF Hack: Don't set the ChangeConnected flag. Without this, JSRF hard crashes 
 	// TODO: Why is this still needed? 
 	if (DeviceType == gDeviceType_Gamepad && TitleIsJSRF()) {
 		DeviceType->ChangeConnected = 0;
 	}
+
     ret = DeviceType->CurrentConnected;
 
 	xboxkrnl::KfLowerIrql(oldIrql);
@@ -434,17 +438,18 @@ BOOL WINAPI XTL::EMUPATCH(XGetDeviceChanges)
 		DeviceType->ChangeConnected = 1;		
 	}
 */
-    // If this device type was not previously detected, connect one (or more)
-    int port;
-    if (DeviceType->CurrentConnected == 0) {
-        for (port = 0; port < 4; port++) {
-            //if the host controller is connected and the xbox DeviceType matches. set the CurrentConnected flag.
-            if (g_XboxControllerHostBridge[port].XboxDeviceInfo.DeviceType == DeviceType && g_XboxControllerHostBridge[port].dwHostType>0) {
-                DeviceType->CurrentConnected |= 1 << port;
-            }
-        }
-        DeviceType->ChangeConnected = DeviceType->CurrentConnected;
+
+	int port;
+    for (port = 0; port < 4; port++) {
+        //if the host controller is connected and the xbox DeviceType matches. set the CurrentConnected flag.
+        if (g_XboxControllerHostBridge[port].XboxDeviceInfo.DeviceType == DeviceType && g_XboxControllerHostBridge[port].dwHostType>0) {
+			DeviceType->CurrentConnected |= (1 << port);
+		}	else {
+			DeviceType->CurrentConnected &= ~(1 << port);
+		}
+
     }
+    DeviceType->ChangeConnected = DeviceType->PreviousConnected ^ DeviceType->CurrentConnected;
 
     // JSRF Hack: Don't set the ChangeConnected flag. Without this, JSRF hard crashes 
 	// TODO: Why is this still needed? 
