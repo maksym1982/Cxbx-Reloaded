@@ -29,11 +29,13 @@
 // *  59 Temple Place - Suite 330, Bostom, MA 02111-1307, USA.
 // *
 // *  (c) 2017 Patrick van Logchem <pvanlogchem@gmail.com>
+// *  (c) 2018 Luke Usher <luke.usher@outlook.com>
 // *
 // *  All rights reserved
 // *
 // ******************************************************************
-#include "Xbox.h" // For HardwareModel
+#include "Xbox.h"
+#include "CxbxKrnl\CxbxKrnl.h"
 
 MCPXRevision Xbox::GetMCPXRevision()
 {
@@ -152,4 +154,21 @@ void Xbox::InitHardware(HardwareModel hardwareModel)
 	// https://github.com/JayFoxRox/Chihiro-Launcher/blob/master/hook.h
 	// https://github.com/docbrown/vxb/wiki/Xbox-Hardware-Information
 	// https://web.archive.org/web/20100617022549/http://www.xbox-linux.org/wiki/PIC
+
+	// Allocate Physical Memory
+	if (m_pPhysicalMemory != nullptr) {
+		free(m_pPhysicalMemory);
+	}
+
+	m_pPhysicalMemory = (uint8_t*)malloc(128 * ONE_MB);
+	if (m_pPhysicalMemory == nullptr) {
+		CxbxKrnlCleanup("Failed to allocate Physical Memory");
+	}
+}
+
+bool Xbox::LoadKernel(std::string path, XboxKernelKeys& keys)
+{
+	// TODO: Load XBOXKRNL.EXE from path into memory, along with the given key data
+	// TODO: Set X86 EIP to Kernel Entry Point
+	return false;
 }

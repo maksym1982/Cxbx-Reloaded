@@ -71,10 +71,16 @@ typedef enum { // TODO : Move to it's own file
 	XCalibur
 } TVEncoder;
 
+typedef struct {
+	uint8_t EEPROMKey[16];
+	uint8_t CertificateKey[16];
+} XboxKernelKeys;
+
 class Xbox
 {
 public:
 	void InitHardware(HardwareModel hardwareModel);
+	bool LoadKernel(std::string path, XboxKernelKeys& keys);
 
 	auto GetPCIBus() { return m_pPCIBus; };
 	auto GetSMBus() { return m_pSMBus; };
@@ -89,7 +95,10 @@ public:
 	SCMRevision GetSMCRevision();
 	MCPXRevision GetMCPXRevision();
 private:
+	// Configuration
 	HardwareModel m_HardwareModel;
+
+	// Hardware Devices
 	PCIBus* m_pPCIBus;
 	SMBus* m_pSMBus;
 	MCPXDevice* m_pMCPX;
@@ -98,6 +107,9 @@ private:
 	NVNetDevice* m_pNVNet;
 	NV2ADevice* m_PNV2A;
 	ADM1032Device* m_pADM1032;
+
+	// Other
+	uint8_t* m_pPhysicalMemory = nullptr;
 };
 
 extern Xbox* g_pXbox;
