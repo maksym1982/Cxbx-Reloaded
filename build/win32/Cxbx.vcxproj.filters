@@ -645,7 +645,7 @@
     <None Include="..\..\src\devices\video\EmuNV2A_USER.cpp">
       <Filter>Hardware\PCI\NV2A</Filter>
     </None>
-    <None Include="..\..\src\.editorconfig" />
+    <None Include="..\..\.editorconfig" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="GUI">
