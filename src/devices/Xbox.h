@@ -81,6 +81,7 @@ class Xbox
 public:
 	void InitHardware(HardwareModel hardwareModel);
 	bool LoadKernel(std::string path, XboxKernelKeys& keys);
+	bool LoadBootROM(std::string path, uint8_t* rc4key);
 
 	auto GetPCIBus() { return m_pPCIBus; };
 	auto GetSMBus() { return m_pSMBus; };

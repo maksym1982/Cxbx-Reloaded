@@ -166,9 +166,32 @@ void Xbox::InitHardware(HardwareModel hardwareModel)
 	}
 }
 
+// HLE Bootstrap (Real Xbox bios/Kernel image)
+// Uses a user-provided RC4 key to decrypt and execute 2BL
+// This means we can boot without an MCPX rom!
+// NOTE: This cannot function with GPU-LLE as the Kernel 
+// accesses the GPU directly. 
+// Saying that, we *may* be able to switch to HLE after boot animation
+// during execution by hooking the Xbe loading API.
+bool Xbox::LoadBootROM(std::string path, uint8_t* rc4key)
+{
+	// TODO: Check if the provided kernel is valid
+	// TODO: Use the rc4 key to decrypt 2BL, copy to 0x090000 (Physical Memory)
+	// TODO: Present the BIOS rom in Physical Memory at 0xF0000000
+	// TODO: Set the X86 entry point to 0x90000
+	// 2BL will setup the page tables and boot the kernel
+	return false;
+}
+
+// HLE Bootstrap (Xbox Kernel Executable)
+// Loads a user-provided XboxKrnl.exe and sets up emulation to start from entry point
+// This can be used to boot the CxbxKrnl replacement 
+// This should work with both HLE and LLE code paths.
 bool Xbox::LoadKernel(std::string path, XboxKernelKeys& keys)
 {
-	// TODO: Load XBOXKRNL.EXE from path into memory, along with the given key data
-	// TODO: Set X86 EIP to Kernel Entry Point
+	// TODO: Check if the provided kernel executable is valid
+	// TODO: Setup page tables
+	// TODO: Load executable into virtual memory
+	// TODO: Set the X86 entry point to exe entry point
 	return false;
 }
