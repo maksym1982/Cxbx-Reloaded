@@ -10,3 +10,9 @@
 [submodule "import/XbSymbolDatabase"]
 	path = import/XbSymbolDatabase
 	url = https://github.com/Cxbx-Reloaded/XbSymbolDatabase.git
+[submodule "import/asmjit"]
+	path = import/asmjit
+	url = https://github.com/asmjit/asmjit
+[submodule "import/zydis"]
+	path = import/zydis
+	url = https://github.com/zyantific/zydis
