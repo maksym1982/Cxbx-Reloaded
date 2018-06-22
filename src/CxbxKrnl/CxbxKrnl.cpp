@@ -71,6 +71,9 @@ namespace xboxkrnl
 #include "devices\LED.h" // For LED::Sequence
 #include "EmuSha.h" // For the SHA1 functions
 
+// Define Xbox class (contains all Xbox relateds hardware, memory functions, etc)
+Xbox* g_pXbox = nullptr;
+
 /*! thread local storage */
 Xbe::TLS *CxbxKrnl_TLS = NULL;
 /*! thread local storage data */
@@ -1451,10 +1454,9 @@ __declspec(noreturn) void CxbxKrnlInit
 
 	SetupXboxDeviceTypes();
 
-	InitXboxHardware(HardwareModel::Revision1_5); // TODO : Make configurable
-
-	// Now the hardware devices exist, couple the EEPROM buffer to it's device
-	g_EEPROM->SetEEPROM((uint8_t*)EEPROM);
+	g_pXbox = new Xbox();
+	g_pXbox->InitHardware(HardwareModel::Revision1_5); // TODO : Make configurable
+	g_pXbox->GetEEPROM()->SetEEPROMData((uint8_t*)EEPROM); // Couple the EEPROM buffer to it's device
 
 	if (!bLLE_GPU)
 	{

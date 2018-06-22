@@ -55,7 +55,7 @@ public:
 	void WriteBlock(uint8_t command, uint8_t* data, int length);
 
 	// EEPROMDevice function
-	void SetEEPROM(uint8_t* pEEPROM) { m_pEEPROM = pEEPROM; };
+	void SetEEPROMData(uint8_t* pEEPROM) { m_pEEPROM = pEEPROM; };
 private:
 	uint8_t* m_pEEPROM;
 };

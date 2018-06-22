@@ -35,18 +35,9 @@
 // ******************************************************************
 #include "Xbox.h" // For HardwareModel
 
-PCIBus* g_PCIBus;
-SMBus* g_SMBus;
-MCPXDevice* g_MCPX;
-SMCDevice* g_SMC;
-EEPROMDevice* g_EEPROM;
-NVNetDevice* g_NVNet;
-NV2ADevice* g_NV2A;
-ADM1032Device* g_ADM1032;
-
-MCPXRevision MCPXRevisionFromHardwareModel(HardwareModel hardwareModel)
+MCPXRevision Xbox::GetMCPXRevision()
 {
-	switch (hardwareModel) {
+	switch (m_HardwareModel) {
 	case Revision1_0:
 	case Revision1_1:
 	case Revision1_2:
@@ -64,9 +55,9 @@ MCPXRevision MCPXRevisionFromHardwareModel(HardwareModel hardwareModel)
 	}
 }
 
-SCMRevision SCMRevisionFromHardwareModel(HardwareModel hardwareModel)
+SCMRevision Xbox::GetSMCRevision()
 {
-	switch (hardwareModel) {
+	switch (m_HardwareModel) {
 	case Revision1_0:
 		return SCMRevision::P01; // Our SCM returns PIC version string "P01"
 	case Revision1_1:
@@ -85,9 +76,9 @@ SCMRevision SCMRevisionFromHardwareModel(HardwareModel hardwareModel)
 	}
 }
 
-TVEncoder TVEncoderFromHardwareModel(HardwareModel hardwareModel)
+TVEncoder Xbox::GetTVEncoderType()
 {
-	switch (hardwareModel) {
+	switch (m_HardwareModel) {
 	case Revision1_0:
 	case Revision1_1:
 	case Revision1_2:
@@ -109,32 +100,32 @@ TVEncoder TVEncoderFromHardwareModel(HardwareModel hardwareModel)
 	}
 }
 
-void InitXboxHardware(HardwareModel hardwareModel)
+void Xbox::InitHardware(HardwareModel hardwareModel)
 {
 	// Determine which (revisions of which) components should be used for this hardware model
-	MCPXRevision mcpx_revision = MCPXRevisionFromHardwareModel(hardwareModel);
-	SCMRevision smc_revision = SCMRevisionFromHardwareModel(hardwareModel);
-	TVEncoder tv_encoder = TVEncoderFromHardwareModel(hardwareModel);
+	MCPXRevision mcpx_revision = GetMCPXRevision();
+	SCMRevision smc_revision = GetSMCRevision();
+	TVEncoder tv_encoder = GetTVEncoderType();
 
 	// Create busses
-	g_PCIBus = new PCIBus();
-	g_SMBus = new SMBus();
+	m_pPCIBus = new PCIBus();
+	m_pSMBus = new SMBus();
 
 	// Create devices
-	g_MCPX = new MCPXDevice(mcpx_revision);
-	g_SMC = new SMCDevice(smc_revision);
-	g_EEPROM = new EEPROMDevice();
-	g_NVNet = new NVNetDevice();
-	g_NV2A = new NV2ADevice();
-	g_ADM1032 = new ADM1032Device();
+	m_pMCPX = new MCPXDevice(mcpx_revision);
+	m_pSMC = new SMCDevice(smc_revision);
+	m_pEEPROM = new EEPROMDevice();
+	m_pNVNet = new NVNetDevice();
+	m_PNV2A = new NV2ADevice();
+	m_pADM1032 = new ADM1032Device();
 
 	// Connect devices to SM bus
-	g_SMBus->ConnectDevice(SMBUS_ADDRESS_SYSTEM_MICRO_CONTROLLER, g_SMC); // W 0x20 R 0x21
-	g_SMBus->ConnectDevice(SMBUS_ADDRESS_EEPROM, g_EEPROM); // W 0xA8 R 0xA9
+	m_pSMBus->ConnectDevice(SMBUS_ADDRESS_SYSTEM_MICRO_CONTROLLER, m_pSMC); // W 0x20 R 0x21
+	m_pSMBus->ConnectDevice(SMBUS_ADDRESS_EEPROM, m_pEEPROM); // W 0xA8 R 0xA9
 
 	// TODO : Other SMBus devices to connect
 	//g_SMBus->ConnectDevice(SMBUS_ADDRESS_MCPX, g_MCPX); // W 0x10 R 0x11 -- TODO : Is MCPX an SMBus and/or PCI device?
-	g_SMBus->ConnectDevice(SMBUS_ADDRESS_TEMPERATURE_MONITOR, g_ADM1032); // W 0x98 R 0x99
+	m_pSMBus->ConnectDevice(SMBUS_ADDRESS_TEMPERATURE_MONITOR, m_pADM1032); // W 0x98 R 0x99
 	//g_SMBus->ConnectDevice(SMBUS_ADDRESS_TV_ENCODER, g_TVEncoder); // W 0x88 R 0x89
 	switch (tv_encoder) {
 	case TVEncoder::Conexant:
@@ -149,12 +140,12 @@ void InitXboxHardware(HardwareModel hardwareModel)
 	}
 
 	// Connect devices to PCI bus
-	g_PCIBus->ConnectDevice(PCI_DEVID(0, PCI_DEVFN(1, 1)), g_SMBus);
-	g_PCIBus->ConnectDevice(PCI_DEVID(0, PCI_DEVFN(4, 0)), g_NVNet);
-	//g_PCIBus->ConnectDevice(PCI_DEVID(0, PCI_DEVFN(4, 1)), g_MCPX); // MCPX device ID = 0x0808 ?
-	//g_PCIBus->ConnectDevice(PCI_DEVID(0, PCI_DEVFN(5, 0)), g_NVAPU);
-	//g_PCIBus->ConnectDevice(PCI_DEVID(0, PCI_DEVFN(6, 0)), g_AC97);
-	g_PCIBus->ConnectDevice(PCI_DEVID(1, PCI_DEVFN(0, 0)), g_NV2A);
+	m_pPCIBus->ConnectDevice(PCI_DEVID(0, PCI_DEVFN(1, 1)), m_pSMBus);
+	m_pPCIBus->ConnectDevice(PCI_DEVID(0, PCI_DEVFN(4, 0)), m_pNVNet);
+	//m_pPCIBus->ConnectDevice(PCI_DEVID(0, PCI_DEVFN(4, 1)), m_pMCPX); // MCPX device ID = 0x0808 ?
+	//m_pPCIBus->ConnectDevice(PCI_DEVID(0, PCI_DEVFN(5, 0)), g_NVAPU);
+	//m_pPCIBus->ConnectDevice(PCI_DEVID(0, PCI_DEVFN(6, 0)), g_AC97);
+	m_pPCIBus->ConnectDevice(PCI_DEVID(1, PCI_DEVFN(0, 0)), m_PNV2A);
 
 	// TODO : Handle other SMBUS Addresses, like PIC_ADDRESS, XCALIBUR_ADDRESS
 	// Resources : http://pablot.com/misc/fancontroller.cpp

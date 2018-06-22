@@ -64,4 +64,3 @@ class ADM1032Device : public SMDevice
 		uint8_t m_MBTemperature;
 };
 
-extern ADM1032Device* g_ADM1032;

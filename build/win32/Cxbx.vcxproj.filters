@@ -17,22 +17,22 @@
       <Filter>GUI</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\CxbxKrnl\EmuD3D8\Convert.cpp">
-      <Filter>EmuD3D8</Filter>
+      <Filter>Emulator\EmuD3D8</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\CxbxKrnl\EmuD3D8\PixelShader.cpp">
-      <Filter>EmuD3D8</Filter>
+      <Filter>Emulator\EmuD3D8</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\CxbxKrnl\EmuD3D8\PushBuffer.cpp">
-      <Filter>EmuD3D8</Filter>
+      <Filter>Emulator\EmuD3D8</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\CxbxKrnl\EmuD3D8\State.cpp">
-      <Filter>EmuD3D8</Filter>
+      <Filter>Emulator\EmuD3D8</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\CxbxKrnl\EmuD3D8\VertexBuffer.cpp">
-      <Filter>EmuD3D8</Filter>
+      <Filter>Emulator\EmuD3D8</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\CxbxKrnl\EmuD3D8\VertexShader.cpp">
-      <Filter>EmuD3D8</Filter>
+      <Filter>Emulator\EmuD3D8</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\CxbxKrnl\EmuKrnl.cpp">
       <Filter>Kernel</Filter>
@@ -193,24 +193,6 @@
     <ClCompile Include="..\..\src\CxbxKrnl\VMManager.cpp">
       <Filter>Emulator</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\devices\EEPROMDevice.cpp">
-      <Filter>Hardware</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\devices\PCIBus.cpp">
-      <Filter>Hardware</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\devices\PCIDevice.cpp">
-      <Filter>Hardware</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\devices\SMBus.cpp">
-      <Filter>Hardware</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\devices\SMCDevice.cpp">
-      <Filter>Hardware</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\devices\SMDevice.cpp">
-      <Filter>Hardware</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\Common\CxbxDebugger.cpp">
       <Filter>Shared</Filter>
     </ClCompile>
@@ -223,9 +205,6 @@
     <ClCompile Include="..\..\src\Common\Win32\Threads.cpp">
       <Filter>Shared</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\devices\MCPXDevice.cpp">
-      <Filter>Hardware</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\CxbxKrnl\crc32c.cpp">
       <Filter>Shared</Filter>
     </ClCompile>
@@ -233,41 +212,38 @@
       <Filter>Kernel</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\devices\EmuNVNet.cpp">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\devices\video\nv2a.cpp">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\devices\video\nv2a_psh.cpp">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\devices\video\nv2a_shaders.cpp">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\devices\video\nv2a_vsh.cpp">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\devices\video\swizzle.cpp">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\HighPerformanceGraphicsEnabler.c" />
-    <ClCompile Include="..\..\src\devices\ADM1032Device.cpp">
-      <Filter>Hardware</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\CxbxKrnl\gloffscreen\gloffscreen_wgl.cpp">
-      <Filter>Hardware\Video\gloffscreen</Filter>
+      <Filter>Hardware\PCI\NV2A\gloffscreen</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\CxbxKrnl\gloffscreen\gloffscreen_common.cpp">
-      <Filter>Hardware\Video\gloffscreen</Filter>
+      <Filter>Hardware\PCI\NV2A\gloffscreen</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\CxbxKrnl\gloffscreen\glextensions.cpp">
-      <Filter>Hardware\Video\gloffscreen</Filter>
+      <Filter>Hardware\PCI\NV2A\gloffscreen</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\devices\video\qemu-thread-win32.cpp">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\devices\video\nv2a_debug.cpp">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\CxbxKrnl\EmuX86.cpp">
       <Filter>Hardware\X86</Filter>
@@ -291,7 +267,31 @@
       <Filter>Kernel</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\Common\Win32\InlineFunc.cpp">
-      <Filter>Cross Platform\Win32</Filter>
+      <Filter>GUI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\devices\PCIBus.cpp">
+      <Filter>Hardware\PCI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\devices\PCIDevice.cpp">
+      <Filter>Hardware\PCI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\devices\ADM1032Device.cpp">
+      <Filter>Hardware\SMBUS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\devices\EEPROMDevice.cpp">
+      <Filter>Hardware\SMBUS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\devices\SMBus.cpp">
+      <Filter>Hardware\SMBUS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\devices\SMCDevice.cpp">
+      <Filter>Hardware\SMBUS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\devices\SMDevice.cpp">
+      <Filter>Hardware\SMBUS</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\devices\MCPXDevice.cpp">
+      <Filter>Hardware\PCI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -308,22 +308,22 @@
       <Filter>GUI</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\CxbxKrnl\EmuD3D8\Convert.h">
-      <Filter>EmuD3D8</Filter>
+      <Filter>Emulator\EmuD3D8</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\CxbxKrnl\EmuD3D8\PixelShader.h">
-      <Filter>EmuD3D8</Filter>
+      <Filter>Emulator\EmuD3D8</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\CxbxKrnl\EmuD3D8\PushBuffer.h">
-      <Filter>EmuD3D8</Filter>
+      <Filter>Emulator\EmuD3D8</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\CxbxKrnl\EmuD3D8\State.h">
-      <Filter>EmuD3D8</Filter>
+      <Filter>Emulator\EmuD3D8</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\CxbxKrnl\EmuD3D8\VertexBuffer.h">
-      <Filter>EmuD3D8</Filter>
+      <Filter>Emulator\EmuD3D8</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\CxbxKrnl\EmuD3D8\VertexShader.h">
-      <Filter>EmuD3D8</Filter>
+      <Filter>Emulator\EmuD3D8</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\CxbxKrnl\EmuKrnlLogging.h">
       <Filter>Kernel</Filter>
@@ -460,27 +460,6 @@
     <ClInclude Include="..\..\src\CxbxKrnl\VMManager.h">
       <Filter>Emulator</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\devices\EEPROMDevice.h">
-      <Filter>Hardware</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\devices\PCIBus.h">
-      <Filter>Hardware</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\devices\PCIDevice.h">
-      <Filter>Hardware</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\devices\SMBus.h">
-      <Filter>Hardware</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\devices\SMCDevice.h">
-      <Filter>Hardware</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\devices\SMDevice.h">
-      <Filter>Hardware</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\devices\LED.h">
-      <Filter>Hardware</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\devices\Xbox.h">
       <Filter>Hardware</Filter>
     </ClInclude>
@@ -493,9 +472,6 @@
     <ClInclude Include="..\..\src\Common\Win32\Threads.h">
       <Filter>Shared</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\devices\MCPXDevice.h">
-      <Filter>Hardware</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\CxbxKrnl\crc32c.h">
       <Filter>Shared</Filter>
     </ClInclude>
@@ -503,37 +479,37 @@
       <Filter>Kernel</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\devices\EmuNVNet.h">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\devices\video\nv2a.h">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\devices\video\nv2a_debug.h">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\devices\video\nv2a_int.h">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\devices\video\nv2a_psh.h">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\devices\video\nv2a_shaders.h">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\devices\video\nv2a_shaders_common.h">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\devices\video\nv2a_vsh.h">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\devices\video\swizzle.h">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\devices\video\vga.h">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\devices\video\queue.h">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\CxbxKrnl\EmuKrnlAvModes.h">
       <Filter>Kernel</Filter>
@@ -542,16 +518,13 @@
       <Filter>Kernel</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\CxbxKrnl\gloffscreen\glextensions.h">
-      <Filter>Hardware\Video\gloffscreen</Filter>
+      <Filter>Hardware\PCI\NV2A\gloffscreen</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\CxbxKrnl\gloffscreen\gloffscreen.h">
-      <Filter>Hardware\Video\gloffscreen</Filter>
+      <Filter>Hardware\PCI\NV2A\gloffscreen</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\devices\video\qemu-thread.h">
-      <Filter>Hardware\Video</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\devices\ADM1032Device.h">
-      <Filter>Hardware</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\CxbxKrnl\EmuX86.h">
       <Filter>Hardware\X86</Filter>
@@ -571,6 +544,33 @@
     <ClInclude Include="..\..\src\Common\Win32\XBPortMapping.h">
       <Filter>Emulator</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\devices\PCIBus.h">
+      <Filter>Hardware\PCI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\devices\PCIDevice.h">
+      <Filter>Hardware\PCI</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\devices\ADM1032Device.h">
+      <Filter>Hardware\SMBUS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\devices\EEPROMDevice.h">
+      <Filter>Hardware\SMBUS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\devices\LED.h">
+      <Filter>Hardware\SMBUS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\devices\SMBus.h">
+      <Filter>Hardware\SMBUS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\devices\SMCDevice.h">
+      <Filter>Hardware\SMBUS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\devices\SMDevice.h">
+      <Filter>Hardware\SMBUS</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\devices\MCPXDevice.h">
+      <Filter>Hardware\PCI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\resource\Splash.jpg">
@@ -583,81 +583,73 @@
     <None Include="..\..\COPYING" />
     <None Include="..\..\README.md" />
     <None Include="..\..\src\devices\video\EmuNV2A_DEBUG.cpp">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </None>
     <None Include="..\..\src\devices\video\EmuNV2A_PBUS.cpp">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </None>
     <None Include="..\..\src\devices\video\EmuNV2A_PCOUNTER.cpp">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </None>
     <None Include="..\..\src\devices\video\EmuNV2A_PCRTC.cpp">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </None>
     <None Include="..\..\src\devices\video\EmuNV2A_PFB.cpp">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </None>
     <None Include="..\..\src\devices\video\EmuNV2A_PFIFO.cpp">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </None>
     <None Include="..\..\src\devices\video\EmuNV2A_PGRAPH.cpp">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </None>
     <None Include="..\..\src\devices\video\EmuNV2A_PMC.cpp">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </None>
     <None Include="..\..\src\devices\video\EmuNV2A_PRAMDAC.cpp">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </None>
     <None Include="..\..\src\devices\video\EmuNV2A_PRAMIN.cpp">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </None>
     <None Include="..\..\src\devices\video\EmuNV2A_PRMA.cpp">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </None>
     <None Include="..\..\src\devices\video\EmuNV2A_PRMCIO.cpp">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </None>
     <None Include="..\..\src\devices\video\EmuNV2A_PRMDIO.cpp">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </None>
     <None Include="..\..\src\devices\video\EmuNV2A_PRMFB.cpp">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </None>
     <None Include="..\..\src\devices\video\EmuNV2A_PRMVIO.cpp">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </None>
     <None Include="..\..\src\devices\video\EmuNV2A_PSTRAPS.cpp">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </None>
     <None Include="..\..\src\devices\video\EmuNV2A_PTIMER.cpp">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </None>
     <None Include="..\..\src\devices\video\EmuNV2A_PTV.cpp">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </None>
     <None Include="..\..\src\devices\video\EmuNV2A_PVIDEO.cpp">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </None>
     <None Include="..\..\src\devices\video\EmuNV2A_PVPE.cpp">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </None>
     <None Include="..\..\src\devices\video\EmuNV2A_USER.cpp">
-      <Filter>Hardware\Video</Filter>
+      <Filter>Hardware\PCI\NV2A</Filter>
     </None>
-    <None Include="..\..\src\.editorconfig">
-      <Filter>Code Format\src</Filter>
-    </None>
-    <None Include="..\..\resource\.editorconfig">
-      <Filter>Code Format\resource</Filter>
-    </None>
+    <None Include="..\..\src\.editorconfig" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="GUI">
       <UniqueIdentifier>{445ff8dc-8414-41ad-8681-01243121d574}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="EmuD3D8">
-      <UniqueIdentifier>{4ee1fc9a-ee21-4764-b96f-1caf41881bab}</UniqueIdentifier>
     </Filter>
     <Filter Include="Kernel">
       <UniqueIdentifier>{0187aa1f-d227-4dd5-b9ae-a336795923c7}</UniqueIdentifier>
@@ -671,32 +663,23 @@
     <Filter Include="Hardware">
       <UniqueIdentifier>{922ab09b-aa8e-41bb-b781-58654160ee3d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Hardware\Video">
-      <UniqueIdentifier>{deba5d3e-9a1a-4099-bc91-12737a48272e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Hardware\Video\gloffscreen">
-      <UniqueIdentifier>{5532aa9d-9e81-4f24-afb1-27e3ce626b6d}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Hardware\X86">
       <UniqueIdentifier>{9efb9cfc-2731-4edb-8dd0-36950b0263df}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Code Format">
-      <UniqueIdentifier>{0e125cbe-fb2e-41ef-a381-6effd9fabd35}</UniqueIdentifier>
+    <Filter Include="Emulator\EmuD3D8">
+      <UniqueIdentifier>{4ee1fc9a-ee21-4764-b96f-1caf41881bab}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Code Format\src">
-      <UniqueIdentifier>{26a58e10-09ca-4605-86f8-552e5a9aa2e3}</UniqueIdentifier>
+    <Filter Include="Hardware\PCI">
+      <UniqueIdentifier>{eafa66f2-c07b-476a-99fd-d39bc7bcc2fd}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Code Format\resource">
-      <UniqueIdentifier>{6bbc2463-25dc-4f07-bf9e-38d6216d036a}</UniqueIdentifier>
+    <Filter Include="Hardware\PCI\NV2A">
+      <UniqueIdentifier>{deba5d3e-9a1a-4099-bc91-12737a48272e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Cross Platform">
-      <UniqueIdentifier>{a097bca1-9b9f-4f35-8e77-fdd0a01b2d8e}</UniqueIdentifier>
+    <Filter Include="Hardware\PCI\NV2A\gloffscreen">
+      <UniqueIdentifier>{5532aa9d-9e81-4f24-afb1-27e3ce626b6d}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Cross Platform\Win32">
-      <UniqueIdentifier>{c242189e-0079-4c32-b561-2871cb561688}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Cross Platform\Linux">
-      <UniqueIdentifier>{3d3739b8-aeee-4bf1-ac1b-8623e7288dda}</UniqueIdentifier>
+    <Filter Include="Hardware\SMBUS">
+      <UniqueIdentifier>{a563708e-d99b-4212-a73f-c9623ed42512}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

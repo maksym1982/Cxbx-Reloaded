@@ -272,22 +272,22 @@ XBSYSAPI EXPORTNUM(45) xboxkrnl::NTSTATUS NTAPI xboxkrnl::HalReadSMBusValue
 	// ergo720: the or 1 on the address is necessary because I have seen that UnleashX and RDX dashboard pass 0x20 instead of the
 	// expected 0x21 to this function when reading cpu and m/b temperatures
 
-	g_SMBus->IOWrite(1, SMB_HOST_ADDRESS, Address | 1);
-	g_SMBus->IOWrite(1, SMB_HOST_COMMAND, Command);
+	g_pXbox->GetSMBus()->IOWrite(1, SMB_HOST_ADDRESS, Address | 1);
+	g_pXbox->GetSMBus()->IOWrite(1, SMB_HOST_COMMAND, Command);
 	if (ReadWord)
-		g_SMBus->IOWrite(1, SMB_GLOBAL_ENABLE, AMD756_WORD_DATA | GE_HOST_STC);
+		g_pXbox->GetSMBus()->IOWrite(1, SMB_GLOBAL_ENABLE, AMD756_WORD_DATA | GE_HOST_STC);
 	else
-		g_SMBus->IOWrite(1, SMB_GLOBAL_ENABLE, AMD756_BYTE_DATA | GE_HOST_STC);
+		g_pXbox->GetSMBus()->IOWrite(1, SMB_GLOBAL_ENABLE, AMD756_BYTE_DATA | GE_HOST_STC);
 	// Note : GE_HOST_STC triggers ExecuteTransaction, which reads the command from the specified address
 
 	// Check if the command was executed successfully
-	if (g_SMBus->IORead(1, SMB_GLOBAL_STATUS) & GS_PRERR_STS) {
+	if (g_pXbox->GetSMBus()->IORead(1, SMB_GLOBAL_STATUS) & GS_PRERR_STS) {
 		Status = STATUS_UNSUCCESSFUL;
 	}
 	else {
-		*DataValue = g_SMBus->IORead(1, SMB_HOST_DATA);
+		*DataValue = g_pXbox->GetSMBus()->IORead(1, SMB_HOST_DATA);
 		if (ReadWord)
-			*DataValue |= g_SMBus->IORead(1, SMB_HOST_DATA + 1) << 8;
+			*DataValue |= g_pXbox->GetSMBus()->IORead(1, SMB_HOST_DATA + 1) << 8;
 	}
 
 	// TODO : Reenable interrupts
@@ -647,19 +647,19 @@ XBSYSAPI EXPORTNUM(50) xboxkrnl::NTSTATUS NTAPI xboxkrnl::HalWriteSMBusValue
 
 	NTSTATUS Status = STATUS_SUCCESS;
 
-	g_SMBus->IOWrite(1, SMB_HOST_ADDRESS, Address);
-	g_SMBus->IOWrite(1, SMB_HOST_COMMAND, Command);
-	g_SMBus->IOWrite(1, SMB_HOST_DATA, DataValue & 0xFF);
+	g_pXbox->GetSMBus()->IOWrite(1, SMB_HOST_ADDRESS, Address);
+	g_pXbox->GetSMBus()->IOWrite(1, SMB_HOST_COMMAND, Command);
+	g_pXbox->GetSMBus()->IOWrite(1, SMB_HOST_DATA, DataValue & 0xFF);
 	if (WriteWord) {
-		g_SMBus->IOWrite(1, SMB_HOST_DATA + 1, (DataValue >> 8) & 0xFF);
-		g_SMBus->IOWrite(1, SMB_GLOBAL_ENABLE, AMD756_WORD_DATA | GE_HOST_STC);
+		g_pXbox->GetSMBus()->IOWrite(1, SMB_HOST_DATA + 1, (DataValue >> 8) & 0xFF);
+		g_pXbox->GetSMBus()->IOWrite(1, SMB_GLOBAL_ENABLE, AMD756_WORD_DATA | GE_HOST_STC);
 	}
 	else
-		g_SMBus->IOWrite(1, SMB_GLOBAL_ENABLE, AMD756_BYTE_DATA | GE_HOST_STC);
+		g_pXbox->GetSMBus()->IOWrite(1, SMB_GLOBAL_ENABLE, AMD756_BYTE_DATA | GE_HOST_STC);
 		// Note : GE_HOST_STC triggers ExecuteTransaction, which writes the command to the specified address
 
 	// Check if the command was executed successfully
-	if (g_SMBus->IORead(1, SMB_GLOBAL_STATUS) & GS_PRERR_STS) {
+	if (g_pXbox->GetSMBus()->IORead(1, SMB_GLOBAL_STATUS) & GS_PRERR_STS) {
 		Status = STATUS_UNSUCCESSFUL;
 	}
 

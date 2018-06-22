@@ -378,7 +378,6 @@
     <None Include="..\..\CONTRIBUTORS" />
     <None Include="..\..\COPYING" />
     <None Include="..\..\README.md" />
-    <None Include="..\..\resource\.editorconfig" />
     <None Include="..\..\resource\Logo.bmp" />
     <None Include="..\..\resource\Splash.jpg" />
     <None Include="..\..\src\.editorconfig" />

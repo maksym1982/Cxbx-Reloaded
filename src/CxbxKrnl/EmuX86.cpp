@@ -88,7 +88,7 @@ uint32_t EmuX86_IORead(xbaddr addr, int size)
 
 	// Pass the IO Read to the PCI Bus, this will handle devices with BARs set to IO addresses
 	uint32_t value = 0;
-	if (g_PCIBus->IORead(addr, &value, size)) {
+	if (g_pXbox->GetPCIBus()->IORead(addr, &value, size)) {
 		return value;
 	}
 
@@ -99,7 +99,7 @@ uint32_t EmuX86_IORead(xbaddr addr, int size)
 void EmuX86_IOWrite(xbaddr addr, uint32_t value, int size)
 {
 	// Pass the IO Write to the PCI Bus, this will handle devices with BARs set to IO addresses
-	if (g_PCIBus->IOWrite(addr, value, size)) {
+	if (g_pXbox->GetPCIBus()->IOWrite(addr, value, size)) {
 		return;
 	}
 
@@ -184,7 +184,7 @@ uint32_t EmuX86_Read(xbaddr addr, int size)
 		return GetAPUTime();
 	} else {
 		// Pass the Read to the PCI Bus, this will handle devices with BARs set to MMIO addresses
-		if (g_PCIBus->MMIORead(addr, &value, size)) {
+		if (g_pXbox->GetPCIBus()->MMIORead(addr, &value, size)) {
 			return value;
 		}
 
@@ -216,7 +216,7 @@ void EmuX86_Write(xbaddr addr, uint32_t value, int size)
 	}
 
 	// Pass the Write to the PCI Bus, this will handle devices with BARs set to MMIO addresses
-	if (g_PCIBus->MMIOWrite(addr, value, size)) {
+	if (g_pXbox->GetPCIBus()->MMIOWrite(addr, value, size)) {
 		return;
 	}
 

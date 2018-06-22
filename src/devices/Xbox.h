@@ -71,12 +71,33 @@ typedef enum { // TODO : Move to it's own file
 	XCalibur
 } TVEncoder;
 
-extern PCIBus* g_PCIBus;
-extern SMBus* g_SMBus;
-extern MCPXDevice* g_MCPX;
-extern SMCDevice* g_SMC;
-extern EEPROMDevice* g_EEPROM;
-extern NVNetDevice* g_NVNet;
-extern NV2ADevice* g_NV2A;
+class Xbox
+{
+public:
+	void InitHardware(HardwareModel hardwareModel);
 
-extern void InitXboxHardware(HardwareModel hardwareModel);
+	auto GetPCIBus() { return m_pPCIBus; };
+	auto GetSMBus() { return m_pSMBus; };
+	auto GetMCPX() { return m_pMCPX; };
+	auto GetSMC() { return m_pSMC; };
+	auto GetEEPROM() { return m_pEEPROM; };
+	auto GetNVNet() { return m_pNVNet; };
+	auto GetNV2A() { return m_PNV2A; };
+	auto GetADM1032() { return m_pADM1032; };
+
+	TVEncoder GetTVEncoderType();
+	SCMRevision GetSMCRevision();
+	MCPXRevision GetMCPXRevision();
+private:
+	HardwareModel m_HardwareModel;
+	PCIBus* m_pPCIBus;
+	SMBus* m_pSMBus;
+	MCPXDevice* m_pMCPX;
+	SMCDevice* m_pSMC;
+	EEPROMDevice* m_pEEPROM;
+	NVNetDevice* m_pNVNet;
+	NV2ADevice* m_PNV2A;
+	ADM1032Device* m_pADM1032;
+};
+
+extern Xbox* g_pXbox;
