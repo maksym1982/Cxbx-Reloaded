@@ -1,12 +1,12 @@
 root = true
 
-[*]
+[src/*]
 indent_size = 4
 trim_trailing_whitespace = true
 end_of_line = crlf
 insert_final_newline = true
 
-[*.rc]
+[resource/*.rc]
 indent_size = 4
 trim_trailing_whitespace = true
 end_of_line = crlf
