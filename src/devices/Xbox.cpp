@@ -36,6 +36,7 @@
 // ******************************************************************
 #include "Xbox.h"
 #include "CxbxKrnl\CxbxKrnl.h"
+#include "CxbxKrnl\LibRc4.h" 
 
 MCPXRevision Xbox::GetMCPXRevision()
 {
@@ -169,18 +170,63 @@ void Xbox::InitHardware(HardwareModel hardwareModel)
 // HLE Bootstrap (Real Xbox bios/Kernel image)
 // Uses a user-provided RC4 key to decrypt and execute 2BL
 // This means we can boot without an MCPX rom!
-// NOTE: This cannot function with GPU-LLE as the Kernel 
+// NOTE: This cannot function with GPU-HLE as the Kernel 
 // accesses the GPU directly. 
 // Saying that, we *may* be able to switch to HLE after boot animation
 // during execution by hooking the Xbe loading API.
+// NOTE: This currently only supports kernel versions signed for MCPX1.0
+// MCPX1.1 uses a different algorithm (TEA) rather than RC4
 bool Xbox::LoadBootROM(std::string path, uint8_t* rc4key)
 {
-	// TODO: Check if the provided kernel is valid
-	// TODO: Use the rc4 key to decrypt 2BL, copy to 0x090000 (Physical Memory)
-	// TODO: Present the BIOS rom in Physical Memory at 0xF0000000
-	// TODO: Set the X86 entry point to 0x90000
+	FILE* fp = fopen(path.c_str(), "rb");
+	if (fp == nullptr) {
+		printf("Xbox::LoadBootROM: Failed to load %s\n", path.c_str());
+		return false;
+	}
+
+	fseek(fp, 0, SEEK_END);
+	size_t size = ftell(fp);
+	rewind(fp);
+
+	// Check the kernel rom for validity (must be a multiple of 0x10000)
+	if (size % 0x10000 != 0) {
+		printf("Xbox::LoadBootROM: %s has an invalid size\n", path.c_str());
+		return 0;
+	}
+
+	m_XboxKernelRom = (uint8_t*)malloc(16 * ONE_MB);
+	void* romdata = (uint8_t*)malloc(size);
+	if (m_XboxKernelRom == nullptr || romdata == nullptr) {
+		printf("Xbox::LoadBootROM: Failed to allocate memory for %s\n", path.c_str());
+		return false;
+	}
+
+	fread(romdata, 1, size, fp);
+	fclose(fp);
+
+	// Fill the KernelRomSpace with our image
+	// Image is mirroed throughout the entire 16MB region from 0xFF000000 to 0xFFFFFFFF
+	for (uint32_t addr = (uint32_t)(-size); addr >= 0xFF000000; addr -= size) {
+		memcpy((void*)&m_XboxKernelRom[addr - 0xFF000000], romdata, size);
+	}
+
+	// Use the rc4 key to decrypt 2BL, copy to 0x90000 (Physical Memory)
+	Rc4Context context;
+	Rc4Initialise(&context, rc4key, 16, 0);
+	Rc4Xor(&context, &m_XboxKernelRom[0xFF9E00], &m_pPhysicalMemory[0x90000], 0x6000);
+
+	// Validate that 2BL decrypted correctly by checking the signature at 0x95FE4
+	if (*(uint32_t*)&m_pPhysicalMemory[0x95FE4] != 0x7854794A) {
+		printf("Xbox::LoadBootROM: Failed to decrypt 2BL. The signature was invalid\n");
+		return false;
+	}
+
+	// Set the X86 entry point to the value at 0x90000
+	uint32_t entryPoint = *((uint32_t*)(&m_pPhysicalMemory[0x90000]));
+	// TODO: Set X86Cpu->eip = entryPoint;
+	
 	// 2BL will setup the page tables and boot the kernel
-	return false;
+	return true;
 }
 
 // HLE Bootstrap (Xbox Kernel Executable)

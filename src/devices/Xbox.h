@@ -111,6 +111,7 @@ private:
 
 	// Other
 	uint8_t* m_pPhysicalMemory = nullptr;
+	uint8_t* m_XboxKernelRom = nullptr;
 };
 
 extern Xbox* g_pXbox;
