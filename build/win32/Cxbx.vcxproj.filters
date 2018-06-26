@@ -571,6 +571,9 @@
     <ClInclude Include="..\..\src\devices\MCPXDevice.h">
       <Filter>Hardware\PCI</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\devices\x86\IX86CPU.h">
+      <Filter>Hardware\X86</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\resource\Splash.jpg">
