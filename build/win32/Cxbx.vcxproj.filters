@@ -293,6 +293,9 @@
     <ClCompile Include="..\..\src\devices\MCPXDevice.cpp">
       <Filter>Hardware\PCI</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\devices\x86\JitX86\JitX86.cpp">
+      <Filter>Hardware\X86\JitX86</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Cxbx\DlgControllerConfig.h">
@@ -574,6 +577,9 @@
     <ClInclude Include="..\..\src\devices\x86\IX86CPU.h">
       <Filter>Hardware\X86</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\devices\x86\JitX86\JitX86.h">
+      <Filter>Hardware\X86\JitX86</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\resource\Splash.jpg">
@@ -683,6 +689,9 @@
     </Filter>
     <Filter Include="Hardware\SMBUS">
       <UniqueIdentifier>{a563708e-d99b-4212-a73f-c9623ed42512}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Hardware\X86\JitX86">
+      <UniqueIdentifier>{cbde718c-657a-48d5-ad9a-125ede7b0c30}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

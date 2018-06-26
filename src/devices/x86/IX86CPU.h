@@ -31,6 +31,9 @@
 // *
 // ******************************************************************
 
+#ifndef IX86CPU_H
+#define IX86CPU_H
+
 #include <cstdint>
 
 class Xbox;
@@ -118,8 +121,10 @@ typedef struct {
 class IX86CPU
 {
 public:
+	virtual bool IsSupported() = 0; // Checks if the a given CPU backend is supported on the host
+
 	// State Control
-	virtual bool Init(Xbox xbox) = 0;
+	virtual bool Init(Xbox* xbox) = 0;
 	virtual void Reset() = 0;
 	virtual void Shutdown() = 0;
 
@@ -144,7 +149,9 @@ public:
 	virtual void* GetPhysicalMemoryPtr(const uint32_t addr) = 0;
 
 	// Memory Access (Virtual Address Space: Parses page tables)
-	virtual bool GetPhysicicalAddress(const uint32_t virtaddr, uint32_t& physaddr) = 0; // Returns the Physical Address for a given virtual address
+	virtual bool GetPhysicalAddress(const uint32_t virtaddr, uint32_t& physaddr) = 0; // Returns the Physical Address for a given virtual address
 	virtual bool ReadVirtualMemory(const uint32_t addr, uint32_t& value, const size_t size) = 0;
 	virtual bool WriteVirtualMemory(const uint32_t addr, const uint32_t value, const size_t size) = 0;
 }; 
+
+#endif

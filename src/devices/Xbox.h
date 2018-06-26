@@ -43,6 +43,7 @@
 #include "EmuNVNet.h" // For NVNetDevice
 #include "ADM1032Device.h" // For ADM1032
 #include "devices\video\nv2a.h" // For NV2ADevice
+#include "x86\IX86CPU.h"
 
 #define SMBUS_ADDRESS_MCPX 0x10 // = Write; Read = 0x11
 #define SMBUS_ADDRESS_TV_ENCODER 0x88 // = Write; Read = 0x89
@@ -79,7 +80,7 @@ typedef struct {
 class Xbox
 {
 public:
-	void InitHardware(HardwareModel hardwareModel);
+	void InitHardware(HardwareModel hardwareModel, IX86CPU* cpu);
 	bool LoadKernel(std::string path, XboxKernelKeys& keys);
 	bool LoadBootROM(std::string path, uint8_t* rc4key);
 
@@ -100,6 +101,7 @@ private:
 	HardwareModel m_HardwareModel;
 
 	// Hardware Devices
+	IX86CPU* m_pCPU;
 	PCIBus* m_pPCIBus;
 	SMBus* m_pSMBus;
 	MCPXDevice* m_pMCPX;

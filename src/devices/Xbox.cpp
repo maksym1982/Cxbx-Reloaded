@@ -103,12 +103,24 @@ TVEncoder Xbox::GetTVEncoderType()
 	}
 }
 
-void Xbox::InitHardware(HardwareModel hardwareModel)
+void Xbox::InitHardware(HardwareModel hardwareModel, IX86CPU* cpu)
 {
 	// Determine which (revisions of which) components should be used for this hardware model
 	MCPXRevision mcpx_revision = GetMCPXRevision();
 	SCMRevision smc_revision = GetSMCRevision();
 	TVEncoder tv_encoder = GetTVEncoderType();
+
+	// Setup the CPU
+	m_pCPU = cpu;
+	if (!m_pCPU->IsSupported()) {
+		CxbxKrnlCleanup("Given CPU Backend is not supported on the host");
+	}
+
+	if (!m_pCPU->Init(this)) {
+		CxbxKrnlCleanup("Failed to initialize CPU");
+	}
+
+	m_pCPU->Reset();
 
 	// Create busses
 	m_pPCIBus = new PCIBus();
@@ -223,7 +235,7 @@ bool Xbox::LoadBootROM(std::string path, uint8_t* rc4key)
 
 	// Set the X86 entry point to the value at 0x90000
 	uint32_t entryPoint = *((uint32_t*)(&m_pPhysicalMemory[0x90000]));
-	// TODO: Set X86Cpu->eip = entryPoint;
+	m_pCPU->WriteRegister(X86_REG_EIP, entryPoint);
 	
 	// 2BL will setup the page tables and boot the kernel
 	return true;

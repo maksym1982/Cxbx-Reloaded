@@ -373,6 +373,7 @@
     <ClInclude Include="..\..\src\devices\video\swizzle.h" />
     <ClInclude Include="..\..\src\devices\video\vga.h" />
     <ClInclude Include="..\..\src\devices\x86\IX86CPU.h" />
+    <ClInclude Include="..\..\src\devices\x86\JitX86\JitX86.h" />
     <ClInclude Include="..\..\src\devices\Xbox.h" />
   </ItemGroup>
   <ItemGroup>
@@ -736,6 +737,7 @@
     <ClCompile Include="..\..\src\devices\video\nv2a_vsh.cpp" />
     <ClCompile Include="..\..\src\devices\video\qemu-thread-win32.cpp" />
     <ClCompile Include="..\..\src\devices\video\swizzle.cpp" />
+    <ClCompile Include="..\..\src\devices\x86\JitX86\JitX86.cpp" />
     <ClCompile Include="..\..\src\devices\Xbox.cpp" />
     <ClCompile Include="..\..\src\HighPerformanceGraphicsEnabler.c" />
   </ItemGroup>
