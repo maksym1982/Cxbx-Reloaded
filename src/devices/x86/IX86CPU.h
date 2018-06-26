@@ -33,6 +33,8 @@
 
 #include <cstdint>
 
+class Xbox;
+
 // Registers
 typedef enum {
 	X86_REG_INVALID = 0,
@@ -106,9 +108,43 @@ typedef struct {
     uint64_t value; // MSR value
 } X86Msr;
 
+// List of supported execution modes for the current CPU backend
+typedef struct {
+	bool Step = false;
+	bool ExecuteBlock = false;
+	bool Execute = false;
+} X86ExecutionModes;
+
 class IX86CPU
 {
 public:
+	// State Control
+	virtual bool Init(Xbox xbox) = 0;
+	virtual void Reset() = 0;
+	virtual void Shutdown() = 0;
+
+	// Register Get/Set
 	virtual bool ReadRegister(const X86Reg reg, uint32_t& value) = 0;
 	virtual bool WriteRegister(const X86Reg reg, const uint32_t value) = 0;
-};
+	 
+	// Execution
+	virtual X86ExecutionModes GetSupportedExecutionModes() = 0;
+	virtual bool Step() = 0;					// Step for a single instruction (optional)
+	virtual bool ExecuteBlock() = 0;			// Execute a single code block (usually, this means until a branch is hit)
+	virtual bool Execute() = 0;					// Execute indefinitely (Until an interrupt is encountered)
+	virtual bool Interrupt(uint8_t vector) = 0; // Trigger an interrupt
+
+	// IO
+	virtual bool IORead(const unsigned port, uint32_t& value, const size_t size) = 0;
+	virtual bool IOWrite(const unsigned port, const uint32_t value, const size_t size) = 0;
+
+	// Memory Access (Physical Address Space)
+	virtual bool ReadPhysicalMemory(const uint32_t addr, uint32_t& value, const size_t size) = 0;
+	virtual bool WritePhysicalMemory(const uint32_t addr, const uint32_t value, const size_t size) = 0;
+	virtual void* GetPhysicalMemoryPtr(const uint32_t addr) = 0;
+
+	// Memory Access (Virtual Address Space: Parses page tables)
+	virtual bool GetPhysicicalAddress(const uint32_t virtaddr, uint32_t& physaddr) = 0; // Returns the Physical Address for a given virtual address
+	virtual bool ReadVirtualMemory(const uint32_t addr, uint32_t& value, const size_t size) = 0;
+	virtual bool WriteVirtualMemory(const uint32_t addr, const uint32_t value, const size_t size) = 0;
+}; 
