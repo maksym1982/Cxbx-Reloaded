@@ -80,10 +80,12 @@ typedef struct {
 class Xbox
 {
 public:
+	// Setup
 	void InitHardware(HardwareModel hardwareModel, IX86CPU* cpu);
 	bool LoadKernel(std::string path, XboxKernelKeys& keys);
 	bool LoadBootROM(std::string path, uint8_t* rc4key);
 
+	// Hardware Devices
 	auto GetPCIBus() { return m_pPCIBus; };
 	auto GetSMBus() { return m_pSMBus; };
 	auto GetMCPX() { return m_pMCPX; };
@@ -93,9 +95,15 @@ public:
 	auto GetNV2A() { return m_PNV2A; };
 	auto GetADM1032() { return m_pADM1032; };
 
+	// Configuration Info
 	TVEncoder GetTVEncoderType();
 	SCMRevision GetSMCRevision();
 	MCPXRevision GetMCPXRevision();
+
+	// Memory Access (Physical Address Space)
+	bool ReadPhysicalMemory(const uint32_t addr, uint32_t& value, const size_t size);
+	bool WritePhysicalMemory(const uint32_t addr, const uint32_t value, const size_t size);
+	void* GetPhysicalMemoryPtr(const uint32_t addr);
 private:
 	// Configuration
 	HardwareModel m_HardwareModel;

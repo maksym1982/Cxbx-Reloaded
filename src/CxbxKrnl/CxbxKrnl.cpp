@@ -1456,7 +1456,7 @@ __declspec(noreturn) void CxbxKrnlInit
 	SetupXboxDeviceTypes();
 
 	g_pXbox = new Xbox();
-	g_pXbox->InitHardware(HardwareModel::Revision1_5, new JitX86()); // TODO : Make configurable
+	g_pXbox->InitHardware(HardwareModel::Revision1_0, new JitX86()); // TODO : Make configurable
 	g_pXbox->GetEEPROM()->SetEEPROMData((uint8_t*)EEPROM); // Couple the EEPROM buffer to it's device
 
 	if (!bLLE_GPU)

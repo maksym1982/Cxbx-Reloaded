@@ -7,7 +7,7 @@
 // *  `88bo,__,o,    oP"``"Yo,  _88o,,od8P   oP"``"Yo,
 // *    "YUMMMMMP",m"       "Mm,""YUMMMP" ,m"       "Mm,
 // *
-// *   Hardware->X86->JitX86/JitX86.h
+// *   Hardware->X86->NullX86/NullX86.cpp
 // *
 // *  This file is part of the Cxbx project.
 // *
@@ -31,43 +31,85 @@
 // *
 // ******************************************************************
 
-#ifndef JITX86_H
-#define JITX86_H
+#include "NullX86.h"
+#include "devices\Xbox.h"
 
-#include "devices\x86\IX86CPU.h"
-class Xbox;
-
-class JitX86 : public IX86CPU
+bool NullX86::IsSupported()
 {
-public:
-	bool IsSupported();
+	return false;
+}
 
-	// State Control
-	bool Init(Xbox* xbox);
-	void Reset();
-	void Shutdown();
+bool NullX86::Init(Xbox* xbox)
+{
+	m_pXbox = xbox;
+	return false;
+}
 
-	// Register Get/Set
-	bool ReadRegister(const X86Reg reg, uint32_t& value);
-	bool WriteRegister(const X86Reg reg, const uint32_t value);
-	 
-	// Execution
-	X86ExecutionModes GetSupportedExecutionModes();
-	bool Step();					// Step for a single instruction (optional)
-	bool ExecuteBlock();			// Execute a single code block (usually, this means until a branch is hit)
-	bool Execute();					// Execute indefinitely (Until an interrupt is encountered)
-	bool Interrupt(uint8_t vector); // Trigger an interrupt
+void NullX86::Reset()
+{
+}
 
-	// IO
-	bool IORead(const unsigned port, uint32_t& value, const size_t size);
-	bool IOWrite(const unsigned port, const uint32_t value, const size_t size);
+void NullX86::Shutdown()
+{
+}
 
-	// Memory Access (Virtual Address Space: Parses page tables)
-	bool GetPhysicalAddress(const uint32_t virtaddr, uint32_t& physaddr); // Returns the Physical Address for a given virtual address
-	bool ReadVirtualMemory(const uint32_t addr, uint32_t& value, const size_t size);
-	bool WriteVirtualMemory(const uint32_t addr, const uint32_t value, const size_t size);
-private:
-	Xbox* m_pXbox = nullptr;
-}; 
+bool NullX86::ReadRegister(const X86Reg reg, uint32_t & value)
+{
+	return false;
+}
 
-#endif
+bool NullX86::WriteRegister(const X86Reg reg, const uint32_t value)
+{
+	return false;
+}
+
+X86ExecutionModes NullX86::GetSupportedExecutionModes()
+{
+	return X86ExecutionModes();
+}
+
+bool NullX86::Step()
+{
+	return false;
+}
+
+bool NullX86::ExecuteBlock()
+{
+	return false;
+}
+
+bool NullX86::Execute()
+{
+	return false;
+}
+
+bool NullX86::Interrupt(uint8_t vector)
+{
+	return false;
+}
+
+bool NullX86::IORead(const unsigned port, uint32_t & value, const size_t size)
+{
+	return false;
+}
+
+bool NullX86::IOWrite(const unsigned port, const uint32_t value, const size_t size)
+{
+	return false;
+}
+
+bool NullX86::GetPhysicalAddress(const uint32_t virtaddr, uint32_t & physaddr)
+{
+	return false;
+}
+
+bool NullX86::ReadVirtualMemory(const uint32_t addr, uint32_t & value, const size_t size)
+{
+	return false;
+}
+
+bool NullX86::WriteVirtualMemory(const uint32_t addr, const uint32_t value, const size_t size)
+{
+	return false;
+}
+

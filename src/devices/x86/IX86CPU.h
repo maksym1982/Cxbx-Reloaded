@@ -143,11 +143,6 @@ public:
 	virtual bool IORead(const unsigned port, uint32_t& value, const size_t size) = 0;
 	virtual bool IOWrite(const unsigned port, const uint32_t value, const size_t size) = 0;
 
-	// Memory Access (Physical Address Space)
-	virtual bool ReadPhysicalMemory(const uint32_t addr, uint32_t& value, const size_t size) = 0;
-	virtual bool WritePhysicalMemory(const uint32_t addr, const uint32_t value, const size_t size) = 0;
-	virtual void* GetPhysicalMemoryPtr(const uint32_t addr) = 0;
-
 	// Memory Access (Virtual Address Space: Parses page tables)
 	virtual bool GetPhysicalAddress(const uint32_t virtaddr, uint32_t& physaddr) = 0; // Returns the Physical Address for a given virtual address
 	virtual bool ReadVirtualMemory(const uint32_t addr, uint32_t& value, const size_t size) = 0;

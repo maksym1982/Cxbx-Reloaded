@@ -253,3 +253,18 @@ bool Xbox::LoadKernel(std::string path, XboxKernelKeys& keys)
 	// TODO: Set the X86 entry point to exe entry point
 	return false;
 }
+
+bool Xbox::ReadPhysicalMemory(const uint32_t addr, uint32_t & value, const size_t size)
+{
+	return false;
+}
+
+bool Xbox::WritePhysicalMemory(const uint32_t addr, const uint32_t value, const size_t size)
+{
+	return false;
+}
+
+void * Xbox::GetPhysicalMemoryPtr(const uint32_t addr)
+{
+	return nullptr;
+}

@@ -7,7 +7,7 @@
 // *  `88bo,__,o,    oP"``"Yo,  _88o,,od8P   oP"``"Yo,
 // *    "YUMMMMMP",m"       "Mm,""YUMMMP" ,m"       "Mm,
 // *
-// *   Hardware->X86->JitX86/JitX86.h
+// *   Hardware->X86->NullX86/NullX86.h
 // *
 // *  This file is part of the Cxbx project.
 // *
@@ -31,13 +31,13 @@
 // *
 // ******************************************************************
 
-#ifndef JITX86_H
-#define JITX86_H
+#ifndef NULLX86_H
+#define NULLX86_H
 
 #include "devices\x86\IX86CPU.h"
 class Xbox;
 
-class JitX86 : public IX86CPU
+class NullX86 : public IX86CPU
 {
 public:
 	bool IsSupported();

@@ -32,9 +32,12 @@
 // ******************************************************************
 
 #include "JitX86.h"
+#include "devices\Xbox.h"
 
 bool JitX86::IsSupported()
 {
+	// JitX86 is only supported on X86 platforms, but in that case we 
+	// just won't compile it into the executable, no need to check that here
 	return true;
 }
 
@@ -95,21 +98,6 @@ bool JitX86::IORead(const unsigned port, uint32_t & value, const size_t size)
 bool JitX86::IOWrite(const unsigned port, const uint32_t value, const size_t size)
 {
 	return false;
-}
-
-bool JitX86::ReadPhysicalMemory(const uint32_t addr, uint32_t & value, const size_t size)
-{
-	return false;
-}
-
-bool JitX86::WritePhysicalMemory(const uint32_t addr, const uint32_t value, const size_t size)
-{
-	return false;
-}
-
-void * JitX86::GetPhysicalMemoryPtr(const uint32_t addr)
-{
-	return nullptr;
 }
 
 bool JitX86::GetPhysicalAddress(const uint32_t virtaddr, uint32_t & physaddr)
