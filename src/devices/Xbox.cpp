@@ -110,18 +110,6 @@ void Xbox::InitHardware(HardwareModel hardwareModel, IX86CPU* cpu)
 	SCMRevision smc_revision = GetSMCRevision();
 	TVEncoder tv_encoder = GetTVEncoderType();
 
-	// Setup the CPU
-	m_pCPU = cpu;
-	if (!m_pCPU->IsSupported()) {
-		CxbxKrnlCleanup("Given CPU Backend is not supported on the host");
-	}
-
-	if (!m_pCPU->Init(this)) {
-		CxbxKrnlCleanup("Failed to initialize CPU");
-	}
-
-	m_pCPU->Reset();
-
 	// Create busses
 	m_pPCIBus = new PCIBus();
 	m_pSMBus = new SMBus();
@@ -177,6 +165,49 @@ void Xbox::InitHardware(HardwareModel hardwareModel, IX86CPU* cpu)
 	if (m_pPhysicalMemory == nullptr) {
 		CxbxKrnlCleanup("Failed to allocate Physical Memory");
 	}
+	
+	// Setup the CPU
+	m_pCPU = cpu;
+	if (!m_pCPU->IsSupported()) {
+		CxbxKrnlCleanup("Given CPU Backend is not supported on the host");
+	}
+
+	if (!m_pCPU->Init(this)) {
+		CxbxKrnlCleanup("Failed to initialize CPU");
+	}
+
+	// Reset the CPU
+	m_pCPU->Reset();
+
+	// Write a default GDT to emulated memory
+	uint32_t gdt[6] = {
+		0,
+		0,
+		0xFFFF,
+		0xCF9B00,
+		0xFFFF,
+		0xCF9300
+	};
+
+	// Setup GDTR (GDT @ 0x2000, 6 entires long)
+	WritePhysicalMemory(0x1000, 6 * sizeof(uint32_t), sizeof(uint16_t));
+	WritePhysicalMemory(0x1002, 0x2000, sizeof(uint32_t));
+
+	// Copy GDT data to memory
+	memcpy(&m_pPhysicalMemory[0x2000], gdt, 6 * sizeof(uint32_t));
+
+	// Set the GDTR/IDT registers
+	m_pCPU->WriteRegister(X86_REG_GDTR, 0x1000);
+	m_pCPU->WriteRegister(X86_REG_IDTR, 0x1000);
+
+	// Switch to protected mode (setting PE bit in CR0) and setting segment regs
+	uint32_t cr0 = 0;
+	m_pCPU->ReadRegister(X86_REG_CR0, cr0);
+	m_pCPU->WriteRegister(X86_REG_CR0, cr0 & 0x1);
+	m_pCPU->WriteRegister(X86_REG_CS, 0x08);
+	m_pCPU->WriteRegister(X86_REG_DS, 0x10);
+	m_pCPU->WriteRegister(X86_REG_ES, 0x10);
+	m_pCPU->WriteRegister(X86_REG_SS, 0x10);
 }
 
 // HLE Bootstrap (Real Xbox bios/Kernel image)
