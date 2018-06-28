@@ -58,7 +58,7 @@ namespace xboxkrnl
 #include "VMManager.h"
 #include "CxbxDebugger.h"
 #include "EmuX86.h"
-#include "devices\x86\JitX86\JitX86.h"
+#include "devices\x86\UnicornX86\UnicornX86.h"
 
 #include <shlobj.h>
 #include <clocale>
@@ -1229,6 +1229,19 @@ __declspec(noreturn) void CxbxKrnlInit
 	void(*Entry)(),
 	int BootFlags)
 {
+	g_pXbox = new Xbox();
+	g_pXbox->InitHardware(HardwareModel::Revision1_0, new UnicornX86()); // TODO : Make configurable
+	g_pXbox->GetEEPROM()->SetEEPROMData((uint8_t*)EEPROM); // Couple the EEPROM buffer to it's device
+
+	uint8_t rc4Key[16] = { 0 }; // TODO: User configurable RC4 key
+	if (!g_pXbox->LoadBootROM("3944.bin", rc4Key)) {
+		CxbxKrnlCleanup("Failed to load Xbox Bootrom");
+	}
+
+	while (true) {
+		g_pXbox->RunFrame();
+	}
+
 	// update caches
 	CxbxKrnl_TLS = pTLS;
 	CxbxKrnl_TLSData = pTLSData;
@@ -1454,10 +1467,6 @@ __declspec(noreturn) void CxbxKrnlInit
 	EmuHLEIntercept(pXbeHeader);
 
 	SetupXboxDeviceTypes();
-
-	g_pXbox = new Xbox();
-	g_pXbox->InitHardware(HardwareModel::Revision1_0, new JitX86()); // TODO : Make configurable
-	g_pXbox->GetEEPROM()->SetEEPROMData((uint8_t*)EEPROM); // Couple the EEPROM buffer to it's device
 
 	if (!bLLE_GPU)
 	{

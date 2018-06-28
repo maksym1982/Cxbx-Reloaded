@@ -85,6 +85,9 @@ public:
 	bool LoadKernel(std::string path, XboxKernelKeys& keys);
 	bool LoadBootROM(std::string path, uint8_t* rc4key);
 
+	// Execution
+	void RunFrame();
+
 	// Hardware Devices
 	auto GetPCIBus() { return m_pPCIBus; };
 	auto GetSMBus() { return m_pSMBus; };
@@ -104,6 +107,7 @@ public:
 	bool ReadPhysicalMemory(const uint32_t addr, uint32_t& value, const size_t size);
 	bool WritePhysicalMemory(const uint32_t addr, const uint32_t value, const size_t size);
 	void* GetPhysicalMemoryPtr(const uint32_t addr);
+	size_t GetPhysicalMemorySize();
 private:
 	// Configuration
 	HardwareModel m_HardwareModel;
@@ -121,7 +125,8 @@ private:
 
 	// Other
 	uint8_t* m_pPhysicalMemory = nullptr;
-	uint8_t* m_XboxKernelRom = nullptr;
+	size_t m_PhysicalMemorySize = 0;
+	uint8_t m_pXboxKernelRom[0x1000000];
 };
 
 extern Xbox* g_pXbox;

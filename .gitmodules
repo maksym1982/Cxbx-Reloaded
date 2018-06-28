@@ -16,3 +16,6 @@
 [submodule "import/zydis"]
 	path = import/zydis
 	url = https://github.com/zyantific/zydis
+[submodule "src/devices/x86/UnicornX86/unicorn"]
+	path = src/devices/x86/UnicornX86/unicorn
+	url = https://github.com/cxbx-reloaded/unicorn

@@ -375,6 +375,7 @@
     <ClInclude Include="..\..\src\devices\x86\IX86CPU.h" />
     <ClInclude Include="..\..\src\devices\x86\JitX86\JitX86.h" />
     <ClInclude Include="..\..\src\devices\x86\NullX86\NullX86.h" />
+    <ClInclude Include="..\..\src\devices\x86\UnicornX86\UnicornX86.h" />
     <ClInclude Include="..\..\src\devices\Xbox.h" />
   </ItemGroup>
   <ItemGroup>
@@ -740,10 +741,17 @@
     <ClCompile Include="..\..\src\devices\video\swizzle.cpp" />
     <ClCompile Include="..\..\src\devices\x86\JitX86\JitX86.cpp" />
     <ClCompile Include="..\..\src\devices\x86\NullX86\NullX86.cpp" />
+    <ClCompile Include="..\..\src\devices\x86\UnicornX86\UnicornX86.cpp" />
     <ClCompile Include="..\..\src\devices\Xbox.cpp" />
     <ClCompile Include="..\..\src\HighPerformanceGraphicsEnabler.c" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\src\devices\x86\UnicornX86\unicorn\msvc\unicorn\unicorn_static\unicorn_static.vcxproj">
+      <Project>{b6efd6d7-c2d4-4fbb-b363-2e08ce09cc96}</Project>
+    </ProjectReference>
+    <ProjectReference Include="..\..\src\devices\x86\UnicornX86\unicorn\msvc\unicorn\x86_64-softmmu\x86_64-softmmu.vcxproj">
+      <Project>{17077e86-ae7c-41af-86ed-2bac03b019bc}</Project>
+    </ProjectReference>
     <ProjectReference Include="asmjit.vcxproj">
       <Project>{68582222-3ca2-4f2b-b415-64b915fadbe1}</Project>
     </ProjectReference>

@@ -161,7 +161,8 @@ void Xbox::InitHardware(HardwareModel hardwareModel, IX86CPU* cpu)
 		free(m_pPhysicalMemory);
 	}
 
-	m_pPhysicalMemory = (uint8_t*)malloc(128 * ONE_MB);
+	m_PhysicalMemorySize = 128 * ONE_MB;
+	m_pPhysicalMemory = (uint8_t*)malloc(m_PhysicalMemorySize);
 	if (m_pPhysicalMemory == nullptr) {
 		CxbxKrnlCleanup("Failed to allocate Physical Memory");
 	}
@@ -237,9 +238,8 @@ bool Xbox::LoadBootROM(std::string path, uint8_t* rc4key)
 		return 0;
 	}
 
-	m_XboxKernelRom = (uint8_t*)malloc(16 * ONE_MB);
 	void* romdata = (uint8_t*)malloc(size);
-	if (m_XboxKernelRom == nullptr || romdata == nullptr) {
+	if (romdata == nullptr) {
 		printf("Xbox::LoadBootROM: Failed to allocate memory for %s\n", path.c_str());
 		return false;
 	}
@@ -250,13 +250,13 @@ bool Xbox::LoadBootROM(std::string path, uint8_t* rc4key)
 	// Fill the KernelRomSpace with our image
 	// Image is mirroed throughout the entire 16MB region from 0xFF000000 to 0xFFFFFFFF
 	for (uint32_t addr = (uint32_t)(-size); addr >= 0xFF000000; addr -= size) {
-		memcpy((void*)&m_XboxKernelRom[addr - 0xFF000000], romdata, size);
+		memcpy((void*)&m_pXboxKernelRom[addr - 0xFF000000], romdata, size);
 	}
 
 	// Use the rc4 key to decrypt 2BL, copy to 0x90000 (Physical Memory)
 	Rc4Context context;
 	Rc4Initialise(&context, rc4key, 16, 0);
-	Rc4Xor(&context, &m_XboxKernelRom[0xFF9E00], &m_pPhysicalMemory[0x90000], 0x6000);
+	Rc4Xor(&context, &m_pXboxKernelRom[0xFF9E00], &m_pPhysicalMemory[0x90000], 0x6000);
 
 	// Validate that 2BL decrypted correctly by checking the signature at 0x95FE4
 	if (*(uint32_t*)&m_pPhysicalMemory[0x95FE4] != 0x7854794A) {
@@ -287,15 +287,77 @@ bool Xbox::LoadKernel(std::string path, XboxKernelKeys& keys)
 
 bool Xbox::ReadPhysicalMemory(const uint32_t addr, uint32_t & value, const size_t size)
 {
+	void* ptr = GetPhysicalMemoryPtr(addr);
+	if (ptr != nullptr) {
+		switch (size) {
+		case sizeof(uint8_t) :
+			*(uint8_t*)ptr = value;
+			return true;
+		case sizeof(uint16_t) :
+			*(uint16_t*)ptr = value;
+			return true;
+		case sizeof(uint32_t) :
+			*(uint32_t*)ptr = value;
+			return true;
+		}
+
+		return false;
+	}
+
+	if (m_pPCIBus->MMIORead(addr, &value, size)) {
+		return true;
+	}
+
+	printf("Xbox::ReadPhysicalMemory: Unhandled 0x%08X\n", addr);
 	return false;
 }
 
 bool Xbox::WritePhysicalMemory(const uint32_t addr, const uint32_t value, const size_t size)
 {
+	void* ptr = GetPhysicalMemoryPtr(addr);
+	if (ptr != nullptr) {
+		switch (size) {
+			case sizeof(uint8_t) :
+				*(uint8_t*)ptr = value;
+				return true;
+			case sizeof(uint16_t) :
+				*(uint16_t*)ptr = value;
+				return true;
+			case sizeof(uint32_t) :
+				*(uint32_t*)ptr = value;
+				return true;
+			}
+
+		return false;
+	}
+
+	if (m_pPCIBus->MMIOWrite(addr, value, size)) {
+		return true;
+	}
+
+	printf("Xbox::WritePhysicalMemory: Unhandled 0x%08X = 0x%08X\n", addr, value);
 	return false;
 }
 
-void * Xbox::GetPhysicalMemoryPtr(const uint32_t addr)
+void* Xbox::GetPhysicalMemoryPtr(const uint32_t addr)
 {
+	if (addr < m_PhysicalMemorySize) {
+		return (void*)((uintptr_t)m_pPhysicalMemory + addr);
+	}
+
+	if (addr >= 0xFF000000) {
+		return (void*)((uintptr_t)m_pXboxKernelRom + (addr & 0xFFFFFF));
+	}
+
 	return nullptr;
+}
+
+size_t Xbox::GetPhysicalMemorySize()
+{
+	return m_PhysicalMemorySize;
+}
+
+void Xbox::RunFrame()
+{
+	m_pCPU->Execute();
 }

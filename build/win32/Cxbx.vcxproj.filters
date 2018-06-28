@@ -299,6 +299,9 @@
     <ClCompile Include="..\..\src\devices\x86\NullX86\NullX86.cpp">
       <Filter>Hardware\X86\NullX86</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\devices\x86\UnicornX86\UnicornX86.cpp">
+      <Filter>Hardware\X86\UnicornX86</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Cxbx\DlgControllerConfig.h">
@@ -586,6 +589,9 @@
     <ClInclude Include="..\..\src\devices\x86\NullX86\NullX86.h">
       <Filter>Hardware\X86\NullX86</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\devices\x86\UnicornX86\UnicornX86.h">
+      <Filter>Hardware\X86\UnicornX86</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\resource\Splash.jpg">
@@ -701,6 +707,9 @@
     </Filter>
     <Filter Include="Hardware\X86\NullX86">
       <UniqueIdentifier>{592c4f1e-f341-40af-bda3-3b52b3e17d53}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Hardware\X86\UnicornX86">
+      <UniqueIdentifier>{8bbaae39-e179-45bb-9a95-b8c956db6844}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
