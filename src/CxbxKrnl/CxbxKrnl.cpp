@@ -1233,7 +1233,7 @@ __declspec(noreturn) void CxbxKrnlInit
 	g_pXbox->InitHardware(HardwareModel::Revision1_0, new UnicornX86()); // TODO : Make configurable
 	g_pXbox->GetEEPROM()->SetEEPROMData((uint8_t*)EEPROM); // Couple the EEPROM buffer to it's device
 
-	uint8_t rc4Key[16] = { 0 }; // TODO: User configurable RC4 key
+	uint8_t rc4Key[16] = {0};
 	if (!g_pXbox->LoadBootROM("3944.bin", rc4Key)) {
 		CxbxKrnlCleanup("Failed to load Xbox Bootrom");
 	}

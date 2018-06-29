@@ -90,16 +90,6 @@ bool JitX86::Interrupt(uint8_t vector)
 	return false;
 }
 
-bool JitX86::IORead(const unsigned port, uint32_t & value, const size_t size)
-{
-	return false;
-}
-
-bool JitX86::IOWrite(const unsigned port, const uint32_t value, const size_t size)
-{
-	return false;
-}
-
 bool JitX86::GetPhysicalAddress(const uint32_t virtaddr, uint32_t & physaddr)
 {
 	return false;

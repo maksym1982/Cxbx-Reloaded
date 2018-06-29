@@ -354,6 +354,8 @@
     <ClInclude Include="..\..\src\devices\ADM1032Device.h" />
     <ClInclude Include="..\..\src\devices\EEPROMDevice.h" />
     <ClInclude Include="..\..\src\devices\EmuNVNet.h" />
+    <ClInclude Include="..\..\src\devices\I8254.h" />
+    <ClInclude Include="..\..\src\devices\I8259.h" />
     <ClInclude Include="..\..\src\devices\LED.h" />
     <ClInclude Include="..\..\src\devices\MCPXDevice.h" />
     <ClInclude Include="..\..\src\devices\PCIBus.h" />
@@ -726,6 +728,8 @@
     <ClCompile Include="..\..\src\devices\ADM1032Device.cpp" />
     <ClCompile Include="..\..\src\devices\EEPROMDevice.cpp" />
     <ClCompile Include="..\..\src\devices\EmuNVNet.cpp" />
+    <ClCompile Include="..\..\src\devices\I8254.cpp" />
+    <ClCompile Include="..\..\src\devices\I8259.cpp" />
     <ClCompile Include="..\..\src\devices\MCPXDevice.cpp" />
     <ClCompile Include="..\..\src\devices\PCIBus.cpp" />
     <ClCompile Include="..\..\src\devices\PCIDevice.cpp" />

@@ -6,8 +6,12 @@ void SMBus::Init()
 {
 	PCIBarRegister r;
 	r.Raw.type = PCI_BAR_TYPE_IO;
-	r.IO.address = 0xC000;
-	RegisterBAR(1, 32, r.value);
+	r.IO.address = 0x1000;
+	RegisterBAR(1, 16, r.value);
+	r.IO.address = 0xC000;	// SMBus Control
+	RegisterBAR(5, 16, r.value);
+	r.IO.address = 0xC200;	// SPIO
+	RegisterBAR(6, 32, r.value);
 
 	m_DeviceId = 0x01B4;
 	m_VendorId = PCI_VENDOR_ID_NVIDIA;
@@ -94,7 +98,8 @@ void SMBus::ExecuteTransaction()
 
 uint32_t SMBus::IORead(int barIndex, uint32_t addr, unsigned size)
 {
-	if (barIndex != 1) {
+	if (barIndex != 5) {
+		printf("Unsupported BarIndex %d\n", barIndex);
 		return 0;
 	}
 
@@ -141,7 +146,8 @@ uint32_t SMBus::IORead(int barIndex, uint32_t addr, unsigned size)
 
 void SMBus::IOWrite(int barIndex, uint32_t addr, uint32_t value, unsigned size)
 {
-	if (barIndex != 1) {
+	if (barIndex != 5) {
+		printf("Unsupported BarIndex %d\n", barIndex);
 		return;
 	}
 

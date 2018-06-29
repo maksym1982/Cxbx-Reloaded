@@ -58,52 +58,19 @@ extern uint32_t GetAPUTime();
 
 //
 // Read & write handlers handlers for I/O
+// TODO: Cleanup all callers of these to use g_pXbox directly
 //
-
-static int field_pin = 0;
 
 uint32_t EmuX86_IORead(xbaddr addr, int size)
 {
-	switch (addr) {
-	case 0x8008: { // TODO : Move 0x8008 TIMER to a device
-		if (size == sizeof(uint32_t)) {
-			// HACK: This is very wrong.
-			// This timer should count at a specific frequency (3579.545 ticks per ms)
-			// But this is enough to keep NXDK from hanging for now.
-			LARGE_INTEGER performanceCount;
-			QueryPerformanceCounter(&performanceCount);
-			return static_cast<uint32_t>(performanceCount.QuadPart);
-		}
-		break;
-	}
-	case 0x80C0: { // TODO : Move 0x80C0 TV encoder to a device
-		if (size == sizeof(uint8_t)) {
-			// field pin from tv encoder?
-			field_pin = (field_pin + 1) & 1;
-			return field_pin << 5;
-		}
-		break;
-	}
-	}
-
-	// Pass the IO Read to the PCI Bus, this will handle devices with BARs set to IO addresses
-	uint32_t value = 0;
-	if (g_pXbox->GetPCIBus()->IORead(addr, &value, size)) {
-		return value;
-	}
-
-	EmuWarning("EmuX86_IORead(0x%08X, %d) [Unhandled]", addr, size);
-	return 0;
+	uint32_t value;
+	g_pXbox->IORead(addr, value, size);
+	return value;
 }
 
 void EmuX86_IOWrite(xbaddr addr, uint32_t value, int size)
 {
-	// Pass the IO Write to the PCI Bus, this will handle devices with BARs set to IO addresses
-	if (g_pXbox->GetPCIBus()->IOWrite(addr, value, size)) {
-		return;
-	}
-
-	EmuWarning("EmuX86_IOWrite(0x%08X, 0x%04X, %d) [Unhandled]", addr, value, size);
+	g_pXbox->IOWrite(addr, value, size);
 }
 
 //

@@ -76,6 +76,7 @@ namespace xboxkrnl
 #include <gl\GLU.h>
 #include <cassert>
 //#include <gl\glut.h>
+#include "devices\Xbox.h"
 
 // glib types
 typedef char gchar;
@@ -151,10 +152,10 @@ static void update_irq(NV2AState *d)
 	} */
 
 	if (d->pmc.pending_interrupts && d->pmc.enabled_interrupts) {
-		HalSystemInterrupts[3].Assert(true);
+		d->pXbox->GetPIC()->RaiseIRQ(3);
 	}
 	else {
-		HalSystemInterrupts[3].Assert(false);
+		d->pXbox->GetPIC()->LowerIRQ(3);
 	}
 
 	SwitchToThread();
@@ -833,10 +834,12 @@ void CxbxReserveNV2AMemory(NV2AState *d)
 
 /* NV2ADevice */
 
-NV2ADevice::NV2ADevice()
+NV2ADevice::NV2ADevice(Xbox* pXbox)
 {
 	m_nv2a_state = new NV2AState();
-	m_nv2a_state->pgraph.opengl_enabled = bLLE_GPU;
+	m_nv2a_state->pXbox = pXbox;
+	m_nv2a_state->pDevice = this;
+	m_nv2a_state->pgraph.opengl_enabled = true; // TODO: bLLE_GPU
 }
 
 NV2ADevice::~NV2ADevice()

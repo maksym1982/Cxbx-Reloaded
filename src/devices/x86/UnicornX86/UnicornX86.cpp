@@ -35,6 +35,8 @@
 // Windows.h is included by Cxbx-R
 #define _WINSOCKAPI_ 
 
+#include <mutex>
+
 #include "UnicornX86.h"
 #include "devices\Xbox.h"
 
@@ -46,16 +48,36 @@ uc_engine* uc = nullptr;
 
 const uint32_t MMIO_BASE = 0xFD000000;
 
-uint64_t mmio_read_cb(struct uc_struct* uc, void* opaque, uint64_t addr, unsigned size)
+uc_hook uc_hook_ioread;
+uc_hook uc_hook_iowrite;
+
+std::mutex interruptLock;
+constexpr long cyclesPerFrame = (733333333) / 60;
+
+uint64_t mmio_read_cb(struct uc_struct* uc, void* userdata, uint64_t addr, unsigned size)
 {
+	Xbox* pXbox = (Xbox*)userdata;
 	uint32_t result = 0;
-	g_pXbox->ReadPhysicalMemory(addr + MMIO_BASE, result, size);
+	pXbox->ReadPhysicalMemory(addr + MMIO_BASE, result, size);
 	return result;
 }
 
-void mmio_write_cb(struct uc_struct* uc, void* opaque, uint64_t addr, uint64_t data, unsigned size)
+void mmio_write_cb(struct uc_struct* uc, void* userdata, uint64_t addr, uint64_t data, unsigned size)
 {
-	g_pXbox->WritePhysicalMemory(addr + MMIO_BASE, (uint32_t)data, size);
+	Xbox* pXbox = (Xbox*)userdata;
+	pXbox->WritePhysicalMemory(addr + MMIO_BASE, (uint32_t)data, size);
+}
+
+uint32_t io_read_cb(uc_engine *uc, uint32_t port, int size, Xbox* pXbox)
+{
+	uint32_t value;
+	pXbox->IORead(port, value, size);
+	return value;
+}
+
+void io_write_cb(uc_engine *uc, uint32_t port, int size, uint32_t value, Xbox* pXbox)
+{
+	pXbox->IOWrite(port, value, size);
 }
 
 bool UnicornX86::IsSupported()
@@ -84,6 +106,17 @@ bool UnicornX86::Init(Xbox* xbox)
 	}
 
 	err = uc_mmio_map(uc, MMIO_BASE, 0x2000000, mmio_read_cb, mmio_write_cb, xbox);
+	if (err) {
+		return false;
+	}
+
+	err = uc_hook_add(uc, &uc_hook_ioread, UC_HOOK_INSN, io_read_cb, xbox, 1, 0, UC_X86_INS_IN);
+
+	if (err) {
+		return false;
+	}
+
+	err = uc_hook_add(uc, &uc_hook_iowrite, UC_HOOK_INSN, io_write_cb, xbox, 1, 0, UC_X86_INS_OUT);
 	if (err) {
 		return false;
 	}
@@ -159,30 +192,26 @@ bool UnicornX86::ExecuteBlock()
 
 bool UnicornX86::Execute()
 {
+	std::unique_lock<std::mutex> lock(interruptLock);
+
 	uint32_t eip;
 	uc_reg_read(uc, UC_X86_REG_EIP, &eip);
-	printf("UnicornX86::Execute: Starting from 0x%08X\n", eip);
-	auto err = uc_emu_start(uc, eip, 0, 0, 10000000);
-
+	auto err = uc_emu_start(uc, eip, 0, 0, cyclesPerFrame);
 	uc_reg_read(uc, UC_X86_REG_EIP, &eip);
-	printf("UnicornX86::Execute: Finished at 0x%08X, Status: %d\n", eip, err);
+
+	if (err != UC_ERR_OK) {
+		printf("Error %d", err);
+		getchar();
+	}
 	
 	return true;
 }
 
 bool UnicornX86::Interrupt(uint8_t vector)
 {
-	return false;
-}
-
-bool UnicornX86::IORead(const unsigned port, uint32_t & value, const size_t size)
-{
-	return false;
-}
-
-bool UnicornX86::IOWrite(const unsigned port, const uint32_t value, const size_t size)
-{
-	return false;
+	std::unique_lock<std::mutex> lock(interruptLock);
+	uc_emu_interrupt(uc, vector);
+	return true;
 }
 
 bool UnicornX86::GetPhysicalAddress(const uint32_t virtaddr, uint32_t & physaddr)

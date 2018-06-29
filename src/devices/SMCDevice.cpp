@@ -71,7 +71,7 @@ SMCDevice::SMCDevice(SCMRevision revision)
 void SMCDevice::Init()
 {
 	m_PICVersionStringIndex = 0;
-	buffer[SMC_COMMAND_AV_PACK] = AV_PACK_HDTV; // see http://xboxdevwiki.net/PIC#The_AV_Pack
+	buffer[SMC_COMMAND_AV_PACK] = 0x01; // AV_PACK_HDTV (0x04): SMC uses different values than the Krenel
 	buffer[SMC_COMMAND_LED_SEQUENCE] = LED::GREEN;
 	buffer[SMC_COMMAND_SCRATCH] = 0; // http://xboxdevwiki.net/PIC#Scratch_register_values
 }
@@ -107,7 +107,8 @@ uint8_t SMCDevice::ReadByte(uint8_t command)
 		m_PICVersionStringIndex = (m_PICVersionStringIndex + 1) % 3;
 		break;
 	//case 0x03: // tray state
-	//case SMC_COMMAND_AV_PACK: // 0x04	// A / V Pack state
+	case SMC_COMMAND_AV_PACK: // 0x04	// A / V Pack state
+		break;
 	case SMC_COMMAND_CPU_TEMP: // 0x09 // CPU temperature (°C)
 		return g_pXbox->GetADM1032()->ReadByte(0x1);
 	case SMC_COMMAND_MOTHERBOARD_TEMP: // 0x0A // motherboard temperature (°C)

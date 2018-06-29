@@ -45,7 +45,12 @@ bool PCIDevice::UpdateBAR(int index, uint32_t newValue)
 {
 	auto it = m_BAR.find(index);
 	if (it == m_BAR.end()) {
-		printf("PCIDevice::UpdateBAR: Trying to update a BAR that does not exist (index: %d, value 0x%08X)\n", index, newValue);
+		PCIBarRegister r;
+		r.value = newValue;
+		std::string type = r.Memory.type == PCI_BAR_TYPE_IO ? "IO" : "MMIO";
+		uint32_t addr = r.Memory.type == PCI_BAR_TYPE_IO ? r.IO.address : r.Memory.address;
+		
+		printf("PCIDevice::UpdateBAR: Trying to update a BAR that does not exist (index: %d, type %s, addr 0x%08X)\n", index, type.c_str(), addr);
 		return false;
 	}
 

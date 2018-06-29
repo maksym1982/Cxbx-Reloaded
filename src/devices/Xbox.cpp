@@ -115,11 +115,15 @@ void Xbox::InitHardware(HardwareModel hardwareModel, IX86CPU* cpu)
 	m_pSMBus = new SMBus();
 
 	// Create devices
+	m_pPIC = new I8259(this);
+	m_pPIC->Reset();
+	m_pPIT = new I8254(this);
+	m_pPIT->Reset();
 	m_pMCPX = new MCPXDevice(mcpx_revision);
 	m_pSMC = new SMCDevice(smc_revision);
 	m_pEEPROM = new EEPROMDevice();
 	m_pNVNet = new NVNetDevice();
-	m_PNV2A = new NV2ADevice();
+	m_PNV2A = new NV2ADevice(this);
 	m_pADM1032 = new ADM1032Device();
 
 	// Connect devices to SM bus
@@ -355,6 +359,86 @@ void* Xbox::GetPhysicalMemoryPtr(const uint32_t addr)
 size_t Xbox::GetPhysicalMemorySize()
 {
 	return m_PhysicalMemorySize;
+}
+
+bool Xbox::IORead(const uint32_t addr, uint32_t &value, const size_t size)
+{
+	static int field_pin = 0;
+
+	switch (addr) {
+		case PORT_PIT_DATA_0:
+		case PORT_PIT_DATA_1:
+		case PORT_PIT_DATA_2:
+		case PORT_PIT_COMMAND:
+			value = m_pPIT->IORead(addr);
+			return true;
+		case PORT_PIC_MASTER_COMMAND:
+		case PORT_PIC_MASTER_DATA:
+		case PORT_PIC_SLAVE_COMMAND:
+		case PORT_PIC_SLAVE_DATA:
+		case PORT_PIC_MASTER_ELCR:
+		case PORT_PIC_SLAVE_ELCR:
+			value = m_pPIC->IORead(addr);
+			return true;
+		case 0x8008: { // TODO : Move 0x8008 TIMER to a device
+			if (size == sizeof(uint32_t)) {
+				// HACK: This is very wrong.
+				// This timer should count at a specific frequency (3579.545 ticks per ms)
+				// But this is enough to keep NXDK from hanging for now.
+				// TODO: Make this platform independant
+				LARGE_INTEGER performanceCount;
+				QueryPerformanceCounter(&performanceCount);
+				return static_cast<uint32_t>(performanceCount.QuadPart);
+			}
+			break;
+		}
+		case 0x80C0: { // TODO : Move 0x80C0 TV encoder to a device
+			if (size == sizeof(uint8_t)) {
+				// field pin from tv encoder?
+				field_pin = (field_pin + 1) & 1;
+				return field_pin << 5;
+			}
+			break;
+		}
+		default:
+			// Pass the IO Read to the PCI Bus, this will handle devices with BARs set to IO addresses
+			if (g_pXbox->GetPCIBus()->IORead(addr, &value, size)) {
+				return true;
+			}
+	}
+
+
+
+	printf("Xbox::IORead(0x%08X, %d) [Unhandled]\n", addr, size);
+	return false;
+}
+
+bool Xbox::IOWrite(const uint32_t addr, const uint32_t value, const size_t size)
+{
+	switch (addr) {
+		case PORT_PIT_DATA_0:
+		case PORT_PIT_DATA_1:
+		case PORT_PIT_DATA_2:
+		case PORT_PIT_COMMAND:
+			m_pPIT->IOWrite(addr, value);
+			return true;
+		case PORT_PIC_MASTER_COMMAND:
+		case PORT_PIC_MASTER_DATA:
+		case PORT_PIC_SLAVE_COMMAND:
+		case PORT_PIC_SLAVE_DATA:
+		case PORT_PIC_MASTER_ELCR:
+		case PORT_PIC_SLAVE_ELCR:
+			m_pPIC->IOWrite(addr, value);
+			return true;
+		default:
+			// Pass the IO Write to the PCI Bus, this will handle devices with BARs set to IO addresses
+			if (g_pXbox->GetPCIBus()->IOWrite(addr, value, size)) {
+				return true;
+			}
+	}
+
+	printf("Xbox::IOWrite(0x%08X, 0x%04X, %d) [Unhandled]\n", addr, value, size);
+	return false;
 }
 
 void Xbox::RunFrame()

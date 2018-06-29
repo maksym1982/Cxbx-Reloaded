@@ -302,6 +302,12 @@
     <ClCompile Include="..\..\src\devices\x86\UnicornX86\UnicornX86.cpp">
       <Filter>Hardware\X86\UnicornX86</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\devices\I8259.cpp">
+      <Filter>Hardware</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\devices\I8254.cpp">
+      <Filter>Hardware</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\Cxbx\DlgControllerConfig.h">
@@ -591,6 +597,12 @@
     </ClInclude>
     <ClInclude Include="..\..\src\devices\x86\UnicornX86\UnicornX86.h">
       <Filter>Hardware\X86\UnicornX86</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\devices\I8259.h">
+      <Filter>Hardware</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\devices\I8254.h">
+      <Filter>Hardware</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

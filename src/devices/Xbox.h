@@ -42,8 +42,10 @@
 #include "EEPROMDevice.h" // For EEPROMDevice
 #include "EmuNVNet.h" // For NVNetDevice
 #include "ADM1032Device.h" // For ADM1032
-#include "devices\video\nv2a.h" // For NV2ADevice
+#include "video\nv2a.h" // For NV2ADevice
 #include "x86\IX86CPU.h"
+#include "I8259.h"
+#include "I8254.h"
 
 #define SMBUS_ADDRESS_MCPX 0x10 // = Write; Read = 0x11
 #define SMBUS_ADDRESS_TV_ENCODER 0x88 // = Write; Read = 0x89
@@ -89,6 +91,9 @@ public:
 	void RunFrame();
 
 	// Hardware Devices
+	auto GetCPU() { return m_pCPU; };
+	auto GetPIC() { return m_pPIC; };
+	auto GetPIT() { return m_pPIT; };
 	auto GetPCIBus() { return m_pPCIBus; };
 	auto GetSMBus() { return m_pSMBus; };
 	auto GetMCPX() { return m_pMCPX; };
@@ -108,12 +113,18 @@ public:
 	bool WritePhysicalMemory(const uint32_t addr, const uint32_t value, const size_t size);
 	void* GetPhysicalMemoryPtr(const uint32_t addr);
 	size_t GetPhysicalMemorySize();
+
+	// IO Devices
+	bool IORead(const uint32_t addr, uint32_t& value, const size_t size);
+	bool IOWrite(const uint32_t addr, const uint32_t value, const size_t size);
 private:
 	// Configuration
 	HardwareModel m_HardwareModel;
 
 	// Hardware Devices
 	IX86CPU* m_pCPU;
+	I8259* m_pPIC;
+	I8254* m_pPIT;
 	PCIBus* m_pPCIBus;
 	SMBus* m_pSMBus;
 	MCPXDevice* m_pMCPX;

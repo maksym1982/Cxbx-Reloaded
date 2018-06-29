@@ -139,10 +139,6 @@ public:
 	virtual bool Execute() = 0;					// Execute indefinitely (Until an interrupt is encountered)
 	virtual bool Interrupt(uint8_t vector) = 0; // Trigger an interrupt
 
-	// IO
-	virtual bool IORead(const unsigned port, uint32_t& value, const size_t size) = 0;
-	virtual bool IOWrite(const unsigned port, const uint32_t value, const size_t size) = 0;
-
 	// Memory Access (Virtual Address Space: Parses page tables)
 	virtual bool GetPhysicalAddress(const uint32_t virtaddr, uint32_t& physaddr) = 0; // Returns the Physical Address for a given virtual address
 	virtual bool ReadVirtualMemory(const uint32_t addr, uint32_t& value, const size_t size) = 0;

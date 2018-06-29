@@ -469,7 +469,13 @@ typedef struct ChannelControl {
 	uint32_t ref;
 } ChannelControl;
 
+class NV2ADevice;
+class Xbox;
+
 typedef struct NV2AState {
+	NV2ADevice* pDevice; // PCI Device
+	Xbox* pXbox; // Xbox
+
     // PCIDevice dev;
     // qemu_irq irq;
     bool exiting;
@@ -632,10 +638,11 @@ GLuint create_gl_shader(GLenum gl_shader_type,
 	const char *code,
 	const char *name); // forward to nv2a_shaders.cpp
 
-class NV2ADevice : public PCIDevice {
+class NV2ADevice : public PCIDevice
+{
 public:
 	// constructor
-	NV2ADevice();
+	NV2ADevice(Xbox* pXbox);
 	// destructor
 	~NV2ADevice();
 
