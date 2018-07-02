@@ -180,7 +180,7 @@ XBSYSAPI EXPORTNUM(43) xboxkrnl::VOID NTAPI xboxkrnl::HalEnableSystemInterrupt
 // Source : Xbox Linux
 char *IRQNames[MAX_BUS_INTERRUPT_LEVEL + 1] =
 {
-	"<unknown>",
+	"PIT",
 	"USB0", // IRQ 1 USB Controller: nVidia Corporation nForce USB Controller (rev d4) (prog-if 10 [OHCI])
 	"<unknown>",
 	"GPU", // IRQ 3 VGA compatible controller: nVidia Corporation: Unknown device 02a0 (rev a1) (prog-if 00 [VGA])
@@ -191,7 +191,7 @@ char *IRQNames[MAX_BUS_INTERRUPT_LEVEL + 1] =
 	"<unknown>",
 	"USB1", // IRQ 9 USB Controller : nVidia Corporation nForce USB Controller(rev d4) (prog - if 10[OHCI])
 	"<unknown>",
-	"<unknown>",
+	"SMBUS",
 	"<unknown>",
 	"<unknown>",
 	"IDE", // IRQ 14
