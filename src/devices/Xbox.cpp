@@ -112,7 +112,7 @@ void Xbox::InitHardware(HardwareModel hardwareModel, IX86CPU* cpu)
 
 	// Create busses
 	m_pPCIBus = new PCIBus();
-	m_pSMBus = new SMBus();
+	m_pSMBus = new SMBus(this);
 
 	// Create devices
 	m_pPIC = new I8259(this);

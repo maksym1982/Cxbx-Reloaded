@@ -85,7 +85,7 @@ bool JitX86::Execute()
 	return false;
 }
 
-bool JitX86::Interrupt(uint8_t vector)
+bool JitX86::Interrupt()
 {
 	return false;
 }

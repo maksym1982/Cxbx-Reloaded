@@ -1,6 +1,12 @@
 #include <cstdio>
 
 #include "SMBus.h"
+#include "devices/Xbox.h"
+
+SMBus::SMBus(Xbox * pXbox)
+{
+	m_pXbox = pXbox;
+}
 
 void SMBus::Init()
 {
@@ -105,7 +111,7 @@ uint32_t SMBus::IORead(int barIndex, uint32_t addr, unsigned size)
 
 	// For now, make SMBus only support byte-reads
 	if (size != 1) {
-		return 0; // TODO : Set GS_PRERR_STS in m_Status too?
+		printf("Warning: Untested Size %d\n", size);
 	}
 
 	uint32_t value;
@@ -153,7 +159,7 @@ void SMBus::IOWrite(int barIndex, uint32_t addr, uint32_t value, unsigned size)
 
 	// For now, make SMBus only support byte-reads
 	if (size != 1) {
-		return; // TODO : Set GS_PRERR_STS in m_Status too?
+		printf("Warning: Untested Size %d\n", size);
 	}
 
 	addr &= 0x3f;
@@ -161,9 +167,9 @@ void SMBus::IOWrite(int barIndex, uint32_t addr, uint32_t value, unsigned size)
 		case SMB_GLOBAL_STATUS:
 			// If a new status is being set and interrupts are enabled, trigger an interrupt
 			if ((m_Control & GE_HCYC_EN) && ((value & GS_CLEAR_STS) & (~(m_Status & GS_CLEAR_STS)))) {
-				// TODO: RaiseIRQ
+				m_pXbox->GetPIC()->RaiseIRQ(11);
 			} else {
-				// TODO LowerIRQ
+				m_pXbox->GetPIC()->LowerIRQ(11);
 			}
 
 			if (value & GS_CLEAR_STS) {
@@ -188,7 +194,7 @@ void SMBus::IOWrite(int barIndex, uint32_t addr, uint32_t value, unsigned size)
 				ExecuteTransaction();
 
 				if ((value & GE_HCYC_EN) && (m_Status & GS_CLEAR_STS)) {
-					// TODO: RaiseIRQ
+					m_pXbox->GetPIC()->RaiseIRQ(11);
 				}
 			}
 

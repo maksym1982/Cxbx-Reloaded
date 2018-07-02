@@ -69,8 +69,9 @@ void I8259::RaiseIRQ(int index)
 	}
 
 	// If the master PIC has a pending interrupt, tell the CPU
+	// The CPU will call GetInterrupt at the correct time for processing
 	if (m_InterruptOutput[PIC_MASTER]) {
-		m_pXbox->GetCPU()->Interrupt(GetCurrentIRQ());
+		m_pXbox->GetCPU()->Interrupt();
 	}
 }
 

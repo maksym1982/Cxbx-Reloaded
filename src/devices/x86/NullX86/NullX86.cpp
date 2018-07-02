@@ -83,7 +83,7 @@ bool NullX86::Execute()
 	return false;
 }
 
-bool NullX86::Interrupt(uint8_t vector)
+bool NullX86::Interrupt()
 {
 	return false;
 }

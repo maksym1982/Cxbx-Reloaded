@@ -50,8 +50,8 @@ const uint32_t MMIO_BASE = 0xFD000000;
 
 uc_hook uc_hook_ioread;
 uc_hook uc_hook_iowrite;
+uc_hook uc_hook_get_interrupt;
 
-std::mutex interruptLock;
 constexpr long cyclesPerFrame = (733333333) / 60;
 
 uint64_t mmio_read_cb(struct uc_struct* uc, void* userdata, uint64_t addr, unsigned size)
@@ -73,6 +73,12 @@ uint32_t io_read_cb(uc_engine *uc, uint32_t port, int size, Xbox* pXbox)
 	uint32_t value;
 	pXbox->IORead(port, value, size);
 	return value;
+}
+
+int uc_get_interrupt_cb(uc_engine* uc, void* userdata)
+{
+	Xbox* pXbox = (Xbox*)userdata;
+	return pXbox->GetPIC()->GetCurrentIRQ();
 }
 
 void io_write_cb(uc_engine *uc, uint32_t port, int size, uint32_t value, Xbox* pXbox)
@@ -120,6 +126,8 @@ bool UnicornX86::Init(Xbox* xbox)
 	if (err) {
 		return false;
 	}
+
+	err = uc_hook_add(uc, &uc_hook_get_interrupt, UC_HOOK_GET_INTERRUPT, uc_get_interrupt_cb, xbox, 1, 0);
 
 	return true;
 }
@@ -192,11 +200,9 @@ bool UnicornX86::ExecuteBlock()
 
 bool UnicornX86::Execute()
 {
-	std::unique_lock<std::mutex> lock(interruptLock);
-
 	uint32_t eip;
 	uc_reg_read(uc, UC_X86_REG_EIP, &eip);
-	auto err = uc_emu_start(uc, eip, 0, 0, cyclesPerFrame);
+	auto err = uc_emu_start(uc, eip, 0, 0, 0);
 	uc_reg_read(uc, UC_X86_REG_EIP, &eip);
 
 	if (err != UC_ERR_OK) {
@@ -207,10 +213,11 @@ bool UnicornX86::Execute()
 	return true;
 }
 
-bool UnicornX86::Interrupt(uint8_t vector)
+bool UnicornX86::Interrupt()
 {
-	std::unique_lock<std::mutex> lock(interruptLock);
-	uc_emu_interrupt(uc, vector);
+	// Tell Unicorn there is a pending interrupt
+	// Interrupt must be read from the PIC
+	uc_emu_interrupt(uc);
 	return true;
 }
 

@@ -46,9 +46,11 @@
 #define GE_HCYC_EN      (1 << 4)
 #define GE_ABORT        (1 << 5)
 
+class Xbox;
+
 class SMBus : public PCIDevice {
 	public:
-		using PCIDevice::PCIDevice;
+		SMBus(Xbox* pXbox);
 
 		// PCI Functions
 		void Init();
@@ -76,6 +78,7 @@ class SMBus : public PCIDevice {
 		void ExecuteTransaction();
 
 		std::map<uint8_t, SMDevice*> m_Devices;
+		Xbox* m_pXbox;
 };
 
 #endif

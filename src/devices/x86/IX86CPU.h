@@ -137,7 +137,7 @@ public:
 	virtual bool Step() = 0;					// Step for a single instruction (optional)
 	virtual bool ExecuteBlock() = 0;			// Execute a single code block (usually, this means until a branch is hit)
 	virtual bool Execute() = 0;					// Execute indefinitely (Until an interrupt is encountered)
-	virtual bool Interrupt(uint8_t vector) = 0; // Trigger an interrupt
+	virtual bool Interrupt() = 0;				// Trigger an interrupt
 
 	// Memory Access (Virtual Address Space: Parses page tables)
 	virtual bool GetPhysicalAddress(const uint32_t virtaddr, uint32_t& physaddr) = 0; // Returns the Physical Address for a given virtual address
