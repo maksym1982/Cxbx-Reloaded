@@ -39,6 +39,7 @@
 
 #include "I8259.h"
 #include "Xbox.h"
+#include <mutex>
 
 #define ICW1 0
 #define ICW2 1
@@ -61,6 +62,8 @@
 #define PIC_READ_ISR 1			/* OCW3 irq service next CMD read */
 #define PIC_EOI 0x20
 
+std::mutex irq_mutex;
+
 I8259::I8259(Xbox *pXbox)
 {
 	m_pXbox = pXbox;
@@ -68,6 +71,7 @@ I8259::I8259(Xbox *pXbox)
 
 void I8259::Reset()
 {
+	std::lock_guard<std::mutex>lock(irq_mutex);
 	Reset(PIC_MASTER);
 	Reset(PIC_SLAVE);
 
@@ -99,6 +103,7 @@ void I8259::Reset(int pic)
 
 void I8259::RaiseIRQ(int index)
 {
+	std::lock_guard<std::mutex>lock (irq_mutex);
 	if (index <= 7) {
 		SetIRQ(PIC_MASTER, index, true);
 	} else {
@@ -110,6 +115,8 @@ void I8259::RaiseIRQ(int index)
 
 void I8259::LowerIRQ(int index)
 {
+	std::lock_guard<std::mutex>lock(irq_mutex);
+
 	if (index <= 7) {
 		SetIRQ(PIC_MASTER, index, false);
 	} else {
@@ -151,6 +158,8 @@ void I8259::SetIRQ(int pic, int index, bool asserted)
 
 uint32_t I8259::IORead(uint32_t addr)
 {
+	std::lock_guard<std::mutex>lock(irq_mutex);
+
 	if (addr == PORT_PIC_MASTER_ELCR) {
 		return m_ELCR[PIC_MASTER];
 	}
@@ -180,6 +189,8 @@ uint32_t I8259::IORead(uint32_t addr)
 
 void I8259::IOWrite(uint32_t addr, uint32_t value)
 {
+	std::lock_guard<std::mutex>lock(irq_mutex);
+
 	if (addr == PORT_PIC_MASTER_ELCR) {
 		m_ELCR[PIC_MASTER] = value & m_ELCRMask[PIC_MASTER];
 		return;
@@ -297,6 +308,7 @@ void I8259::IOWrite(uint32_t addr, uint32_t value)
 
 int I8259::GetCurrentIRQ()
 {
+	std::lock_guard<std::mutex>lock(irq_mutex);
     int irq = -1;
 
     int masterIrq = GetIRQ(PIC_MASTER);
