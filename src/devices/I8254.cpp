@@ -36,9 +36,9 @@ void I8254::TimerThread(I8254* pPIT)
 	while (pPIT->m_Active && pPIT->m_pXbox->GetPIC() != nullptr) {
 		if (std::chrono::steady_clock::now() > nextInterruptTime) {
 			pPIT->m_pXbox->GetPIC()->RaiseIRQ(0);
-			nextInterruptTime = pPIT->GetNextInterruptTime();
-			Sleep(100);
+			Sleep(1000);
 			pPIT->m_pXbox->GetPIC()->LowerIRQ(0);
+			nextInterruptTime = pPIT->GetNextInterruptTime();
 		}
 	}
 

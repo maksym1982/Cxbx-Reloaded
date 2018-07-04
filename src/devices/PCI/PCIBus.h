@@ -19,13 +19,17 @@
 
 #define PCI_BUS_NUM(x) (((x) >> 8) & 0xff)
 
-typedef struct {
-	uint8_t registerNumber : 8;
-	uint8_t functionNumber : 3; // PCI_FUNC
-	uint8_t deviceNumber : 5; // PCI_SLOT
-	uint8_t busNumber : 8; // PCI_BUS_NUM
-	uint8_t reserved : 7;
-	uint8_t enable : 1;
+typedef union {
+	struct {
+	    uint8_t reserved1 : 2;
+        uint8_t registerNumber : 6;
+        uint8_t functionNumber : 3; // PCI_FUNC
+        uint8_t deviceNumber : 5; // PCI_SLOT
+        uint8_t busNumber : 8; // PCI_BUS_NUM
+        uint8_t reserved2 : 7;
+        uint8_t enable : 1;
+	};
+	uint32_t value;
 } PCIConfigAddressRegister;
 
 class PCIBus {

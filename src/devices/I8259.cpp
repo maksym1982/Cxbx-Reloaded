@@ -1,3 +1,42 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
+// ******************************************************************
+// *
+// *    .,-:::::    .,::      .::::::::.    .,::      .:
+// *  ,;;;'````'    `;;;,  .,;;  ;;;'';;'   `;;;,  .,;;
+// *  [[[             '[[,,[['   [[[__[[\.    '[[,,[['
+// *  $$$              Y$$$P     $$""""Y$$     Y$$$P
+// *  `88bo,__,o,    oP"``"Yo,  _88o,,od8P   oP"``"Yo,
+// *    "YUMMMMMP",m"       "Mm,""YUMMMP" ,m"       "Mm,
+// *
+// *   src->devices->I8259.cpp
+// *
+// *  This file is part of the Cxbx project.
+// *
+// *  Cxbx and Cxbe are free software; you can redistribute them
+// *  and/or modify them under the terms of the GNU General Public
+// *  License as published by the Free Software Foundation; either
+// *  version 2 of the license, or (at your option) any later version.
+// *
+// *  This program is distributed in the hope that it will be useful,
+// *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+// *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+// *  GNU General Public License for more details.
+// *
+// *  You should have recieved a copy of the GNU General Public License
+// *  along with this program; see the file COPYING.
+// *  If not, write to the Free Software Foundation, Inc.,
+// *  59 Temple Place - Suite 330, Bostom, MA 02111-1307, USA.
+// *
+// *  (c) 2018 Luke Usher
+// *
+// *  Based on QEMU 8259 interrupt controller emulation
+// *  (c) 2003-2004 Fabrice Bellard
+// *
+// *  All rights reserved
+// *
+// ******************************************************************
+
 #include "I8259.h"
 #include "Xbox.h"
 
@@ -21,8 +60,6 @@
 #define PIC_READ_IRR 0			/* OCW3 irq ready next CMD read */
 #define PIC_READ_ISR 1			/* OCW3 irq service next CMD read */
 #define PIC_EOI 0x20
-
-// TODO: Implement ELCR support
 
 I8259::I8259(Xbox *pXbox)
 {
@@ -57,7 +94,7 @@ void I8259::Reset(int pic)
 	m_RotateOnAutoEOI[pic] = false;
 	m_IsSpecialFullyNestedMode[pic] = false;
 	m_Is4ByteInit[pic] = false;
-	UpdateIRQ(pic);
+	UpdateIRQ();
 }
 
 void I8259::RaiseIRQ(int index)
@@ -68,11 +105,7 @@ void I8259::RaiseIRQ(int index)
 		SetIRQ(PIC_SLAVE, index - 7, true);
 	}
 
-	// If the master PIC has a pending interrupt, tell the CPU
-	// The CPU will call GetInterrupt at the correct time for processing
-	if (m_InterruptOutput[PIC_MASTER]) {
-		m_pXbox->GetCPU()->Interrupt();
-	}
+	UpdateIRQ();
 }
 
 void I8259::LowerIRQ(int index)
@@ -82,6 +115,8 @@ void I8259::LowerIRQ(int index)
 	} else {
 		SetIRQ(PIC_SLAVE, index - 7, false);
 	}
+
+	UpdateIRQ();
 }
 
 void I8259::SetIRQ(int pic, int index, bool asserted)
@@ -93,12 +128,11 @@ void I8259::SetIRQ(int pic, int index, bool asserted)
 		if (asserted) {
 			m_IRR[pic] |= mask;
 			m_PreviousIRR[pic] |= mask;
-		} else {
-			m_IRR[pic] &= ~mask;
-			m_PreviousIRR[pic] &= ~mask;
+			return;
 		}
 
-		UpdateIRQ(pic);
+		m_IRR[pic] &= ~mask;
+		m_PreviousIRR[pic] &= ~mask;
 		return;
 	}
 
@@ -107,168 +141,149 @@ void I8259::SetIRQ(int pic, int index, bool asserted)
 		if ((m_PreviousIRR[pic] & mask) == 0) {
 			m_IRR[pic] |= mask;
 		}
-		m_PreviousIRR[pic] |= mask;
-	} else {
-		m_PreviousIRR[pic] &= ~mask;
-	}
 
-	UpdateIRQ(pic);
+		m_PreviousIRR[pic] |= mask;
+		return;
+	} 
+
+	m_PreviousIRR[pic] &= ~mask;
 }
 
 uint32_t I8259::IORead(uint32_t addr)
 {
-	switch (addr) {
-		case PORT_PIC_MASTER_COMMAND:
-			return CommandRead(PIC_MASTER);
-		case PORT_PIC_SLAVE_COMMAND:
-			return CommandRead(PIC_SLAVE);
-		case PORT_PIC_MASTER_DATA:
-			return DataRead(PIC_MASTER);
-		case PORT_PIC_SLAVE_DATA:
-			return DataRead(PIC_SLAVE);
-		case PORT_PIC_MASTER_ELCR:
-			return m_ELCR[PIC_MASTER];
-		case PORT_PIC_SLAVE_ELCR:
-			return m_ELCR[PIC_SLAVE];
+	if (addr == PORT_PIC_MASTER_ELCR) {
+		return m_ELCR[PIC_MASTER];
 	}
 
-	return 0;
+	if (addr == PORT_PIC_SLAVE_ELCR) {
+		return m_ELCR[PIC_SLAVE];
+	}
+
+    int pic = (addr & PORT_PIC_SLAVE_COMMAND) == PORT_PIC_SLAVE_COMMAND ? PIC_SLAVE : PIC_MASTER;
+
+    if (m_Poll[pic]) {
+        int ret = Poll(pic, addr);
+        m_Poll[pic] = 0;
+        return ret;
+    }
+
+    if ((addr & 1) == 0) {
+        if (m_ReadRegisterSelect[pic]) {
+            return m_ISR[pic];
+        }
+
+        return m_IRR[pic];
+    }
+
+    return m_IMR[pic];
 }
 
 void I8259::IOWrite(uint32_t addr, uint32_t value)
 {
-	switch (addr) {
-		case PORT_PIC_MASTER_COMMAND:
-			CommandWrite(PIC_MASTER, value);
-			break;
-		case PORT_PIC_SLAVE_COMMAND:
-			CommandWrite(PIC_SLAVE, value);
-			break;
-		case PORT_PIC_MASTER_DATA:
-			DataWrite(PIC_MASTER, value);
-			break;
-		case PORT_PIC_SLAVE_DATA:
-			DataWrite(PIC_SLAVE, value);
-			break;
-		case PORT_PIC_MASTER_ELCR:
-			m_ELCR[PIC_MASTER] = value & m_ELCRMask[PIC_MASTER];
-			break;
-		case PORT_PIC_SLAVE_ELCR:
-			m_ELCR[PIC_SLAVE] = value & m_ELCRMask[PIC_SLAVE];
-			break;
-	}
-}
-
-uint32_t I8259::CommandRead(int pic)
-{
-	if (m_Poll[pic]) {
-		return Poll(pic);
+	if (addr == PORT_PIC_MASTER_ELCR) {
+		m_ELCR[PIC_MASTER] = value & m_ELCRMask[PIC_MASTER];
+		return;
 	}
 
-	if (m_ReadRegisterSelect) {
-		return m_ISR[pic];
+	if (addr == PORT_PIC_SLAVE_ELCR) {
+		m_ELCR[PIC_SLAVE] = value & m_ELCRMask[PIC_SLAVE];
+		return;
 	}
 
-	return m_IRR[pic];
-}
+	int pic = (addr & PORT_PIC_SLAVE_COMMAND) == PORT_PIC_SLAVE_COMMAND ? PIC_SLAVE : PIC_MASTER;
 
-void I8259::CommandWrite(int pic, uint32_t value)
-{
-	if (value & 0x10) {
-		Reset(pic);
-		m_InitState[pic] = 1;
-		m_Is4ByteInit[pic] = value & 1;
+	addr &= 1;
+	if (addr == 0) {
+		if (value & 0x10) {
+			Reset(pic);
+
+			m_InitState[pic] = 1;
+			m_Is4ByteInit[pic] = value & 1;
+			if (value & 0x08) {
+				printf("PIC: Level sensitive irq not supported\n");
+			}
+
+			return;
+		}
+
 		if (value & 0x08) {
-			printf("Warning: Level Sensitive IRQ Not Supported\n");
-		}
-
-		return;
-	}
-
-	if (value & 0x08) {
-		if (value & 0x04) {
-			m_Poll[pic] = true;
-		}
-
-		if (value & 0x02) {
-			m_ReadRegisterSelect[pic] = value & 1;
-		}
- 
-		if (value & 0x40) {
-			m_SpecialMask[pic] = (value >> 5) & 1;
-		}
-
-		return;
-	}
-
-	int command = value >> 5;
-
-	switch (command) {
-		case 0:
-		case 4:
-			m_RotateOnAutoEOI[pic] = command >> 2;
-			break;
-		case 1:
-		case 5:	{
-			int priority = GetPriority(pic, m_ISR[pic]);
-			if (priority == 8) {
-				return;
+			if (value & 0x04) {
+				m_Poll[pic] = 1;
 			}
 
-			int irq = (priority + m_PriorityAdd[pic]) & 7;
-			m_ISR[pic] &= ~(1 << irq);
+			if (value & 0x02) {
+				m_ReadRegisterSelect[pic] = value & 1;
+			}
 
-			if (command == 5) {
+			if (value & 0x40) {
+				m_SpecialMask[pic] = (value >> 5) & 1;
+			}
+
+			return;
+		}
+
+
+		int command = value >> 5;
+		int irq = -1;
+		int priority = 0;
+
+		switch (command) {
+			case 0:
+			case 4:
+				m_RotateOnAutoEOI[pic] = command >> 2;
+				break;
+			case 1: /* end of interrupt */
+			case 5:
+				priority = GetPriority(pic, m_ISR[pic]);
+				if (priority != 8) {
+					irq = (priority + m_PriorityAdd[pic]) & 7;
+					m_ISR[pic] &= ~(1 << irq);
+
+					if (command == 5) {
+						m_PriorityAdd[pic] = (irq + 1) & 7;
+					}
+
+					UpdateIRQ();
+				}
+				break;
+			case 3:
+				irq = value & 7;
+				m_ISR[pic] &= ~(1 << irq);
+				UpdateIRQ();
+				break;
+			case 6:
+				m_PriorityAdd[pic] = (value + 1) & 7;
+				UpdateIRQ();
+				break;
+			case 7:
+				irq = value & 7;
+				m_ISR[pic] &= ~(1 << irq);
 				m_PriorityAdd[pic] = (irq + 1) & 7;
-			}
-
-			UpdateIRQ(pic);
-			break;
+				UpdateIRQ();
+				break;
+			default:
+				break;
 		}
-		case 3:	{
-			int irq = value & 7;
-			m_ISR[pic] &= ~(1 << irq);
-			UpdateIRQ(pic);
-			break;
-		}
-		case 6:
-			m_PriorityAdd[pic] = (value + 1) & 7;
-			UpdateIRQ(pic);
-			break;
-		case 7:
-			int irq = value & 7;
-			m_ISR[pic] &= ~(1 << irq);
-			m_PriorityAdd[pic] = (irq + 1) & 7;
-			UpdateIRQ(pic);
-			break;
-	}
-}
-
-uint32_t I8259::DataRead(int pic)
-{
-	if (m_Poll[pic]) {
-		return Poll(pic);
+		
+		return;
 	}
 
-	return m_IMR[pic];
-}
-
-void I8259::DataWrite(int pic, uint32_t value)
-{
 	switch (m_InitState[pic]) {
 		case 0:
+			/* normal mode */
 			m_IMR[pic] = value;
 			break;
 		case 1:
-			m_Base[pic] = value & 0xF8;
+			m_Base[pic] = value & 0xf8;
 			m_InitState[pic] = 2;
 			break;
 		case 2:
 			if (m_Is4ByteInit[pic]) {
 				m_InitState[pic] = 3;
-			} else {
-				m_InitState[pic] = 0;
+				return;
 			}
+		
+			m_InitState[pic] = 0;
 			break;
 		case 3:
 			m_IsSpecialFullyNestedMode[pic] = (value >> 4) & 1;
@@ -276,32 +291,36 @@ void I8259::DataWrite(int pic, uint32_t value)
 			m_InitState[pic] = 0;
 			break;
 	}
+
+    return;
 }
 
 int I8259::GetCurrentIRQ()
 {
-	int masterIrq = GetIRQ(PIC_MASTER);
+    int irq = -1;
 
-	// If this was a spurious IRQ, report it as such
-	if (masterIrq < 0) {
-		return m_Base[PIC_MASTER] + 7;
-	}
-	
-	// If the master IRQ didn't come from the slave
-	if (masterIrq != 2) {
-		AcknowledgeIRQ(PIC_MASTER, masterIrq);
-		return m_Base[PIC_MASTER] + masterIrq;
-	}
+    int masterIrq = GetIRQ(PIC_MASTER);
+    if (masterIrq >= 0) {
+        AcknowledgeIRQ(PIC_MASTER, masterIrq);
+        if (masterIrq == 2) {
+            int slaveIrq = GetIRQ(PIC_SLAVE);
+            if (slaveIrq >= 0) {
+                AcknowledgeIRQ(PIC_SLAVE, slaveIrq);
+            } else {
+                // spurious IRQ on slave controller
+                slaveIrq = 7;
+            }
+            irq = m_Base[PIC_SLAVE] + slaveIrq;
+        } else {
+            irq = m_Base[PIC_MASTER] + masterIrq;
+        }
+    } else {
+        // spurious IRQ on host controller
+        irq = m_Base[PIC_MASTER] + 7;
+    }
 
-	int slaveIrq = GetIRQ(PIC_SLAVE);
-
-	// If slaveIrq was a spurious IRQ, report it as such
-	if (slaveIrq < 0) {
-		return m_Base[PIC_SLAVE] + 7;
-	}
-	
-	AcknowledgeIRQ(PIC_SLAVE, slaveIrq);
-	return m_Base[PIC_SLAVE] + slaveIrq;
+    UpdateIRQ();
+    return irq;
 }
 
 int I8259::GetPriority(int pic, uint8_t mask)
@@ -357,35 +376,45 @@ void I8259::AcknowledgeIRQ(int pic, int index)
 	if (!(m_ELCR[pic] & 1 << index)) {
 		m_IRR[pic] &= ~(1 << index);
 	}
-	
-	UpdateIRQ(pic);
 }
 
-uint8_t I8259::Poll(int pic)
+uint8_t I8259::Poll(int pic, uint32_t addr)
 {
-	m_Poll[pic] = false;
+    int irq = GetIRQ(pic);
+    if (irq >= 0) {
+        if (addr >> 7) {
+            m_ISR[PIC_MASTER] &= ~(1 << 2);
+            m_ISR[PIC_MASTER] &= ~(1 << 2);
+        }
 
-	int irq = GetIRQ(pic);
-	if (irq >= 0) {
-		AcknowledgeIRQ(pic, irq);
-		return irq | 0x80;
-	}
+        m_IRR[pic] &= ~(1 << irq);
+        m_ISR[pic] &= ~(1 << irq);
 
-	return 0;
+        if (addr >> 7 || irq != 2) {
+            UpdateIRQ();
+        }
+    } else {
+        addr = 0x07;
+        UpdateIRQ();
+    }
+
+    return irq;
 }
 
-void I8259::UpdateIRQ(int pic)
+void I8259::UpdateIRQ()
 {
-	int irq = GetIRQ(pic);
-
-	if (irq >= 0) {
-		m_InterruptOutput[pic] = true;
-	} else {
-		m_InterruptOutput[pic] = false;
+	// First, check the slave pic
+	int slaveIrq = GetIRQ(PIC_SLAVE);
+	if (slaveIrq >= 0) {
+	    // If the IRQ was requested on the slave, tell the master
+	    SetIRQ(PIC_MASTER, 2, true);
+	    SetIRQ(PIC_MASTER, 2, false);
 	}
 
-	// If this was the slave pic, cascade to master
-	if (pic == PIC_SLAVE && m_InterruptOutput[pic]) {
-		RaiseIRQ(2);
+    // Next, check the master
+    int masterIrq = GetIRQ(PIC_MASTER);
+
+	if (masterIrq >= 0) {
+		m_pXbox->GetCPU()->Interrupt();
 	}
 }

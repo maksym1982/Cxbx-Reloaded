@@ -109,11 +109,6 @@ uint32_t SMBus::IORead(int barIndex, uint32_t addr, unsigned size)
 		return 0;
 	}
 
-	// For now, make SMBus only support byte-reads
-	if (size != 1) {
-		printf("Warning: Untested Size %d\n", size);
-	}
-
 	uint32_t value;
 	addr &= 0x3f;
 
@@ -131,6 +126,11 @@ uint32_t SMBus::IORead(int barIndex, uint32_t addr, unsigned size)
 			value = m_Address;
 			break;
 		case SMB_HOST_DATA:
+			if (size == 2) {
+				value = (m_Data1 << 8) | m_Data0;
+				break;
+			}
+
 			value = m_Data0;
 			break;
 		case SMB_HOST_DATA + 1:
@@ -157,16 +157,11 @@ void SMBus::IOWrite(int barIndex, uint32_t addr, uint32_t value, unsigned size)
 		return;
 	}
 
-	// For now, make SMBus only support byte-reads
-	if (size != 1) {
-		printf("Warning: Untested Size %d\n", size);
-	}
-
 	addr &= 0x3f;
 	switch (addr) {
 		case SMB_GLOBAL_STATUS:
 			// If a new status is being set and interrupts are enabled, trigger an interrupt
-			if ((m_Control & GE_HCYC_EN) && ((value & GS_CLEAR_STS) & (~(m_Status & GS_CLEAR_STS)))) {
+			if ((m_Control & GE_HCYC_EN) && ((value & GS_CLEAR_STS)	& (~(m_Status & GS_CLEAR_STS)))) {
 				m_pXbox->GetPIC()->RaiseIRQ(11);
 			} else {
 				m_pXbox->GetPIC()->LowerIRQ(11);
@@ -206,6 +201,13 @@ void SMBus::IOWrite(int barIndex, uint32_t addr, uint32_t value, unsigned size)
 			m_Address = value;
 			break;
 		case SMB_HOST_DATA:
+			if (size == 2) {
+				m_Data0 = value & 0xFF;
+				m_Data1 = (value >> 8) & 0xFF;
+				break;
+			}
+
+
 			m_Data0 = value;
 			break;
 		case SMB_HOST_DATA + 1:

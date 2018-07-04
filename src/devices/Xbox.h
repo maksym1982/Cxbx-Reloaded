@@ -35,14 +35,15 @@
 // ******************************************************************
 #pragma once
 
-#include "PCIBus.h" // For PCIBus
-#include "SMBus.h" // For SMBus
-#include "MCPXDevice.h" // For MCPXDevice
-#include "SMCDevice.h" // For SMCDevice
-#include "EEPROMDevice.h" // For EEPROMDevice
-#include "EmuNVNet.h" // For NVNetDevice
-#include "ADM1032Device.h" // For ADM1032
-#include "video\nv2a.h" // For NV2ADevice
+#include "PCI/PCIBus.h" // For PCIBus
+#include "SMBUS/SMBus.h" // For SMBus
+#include "SMBUS/SMCDevice.h" // For SMCDevice
+#include "SMBUS/EEPROMDevice.h" // For EEPROMDevice
+#include "PCI/NVNET/EmuNVNet.h" // For NVNetDevice
+#include "SMBUS/ADM1032Device.h" // For ADM1032
+#include "PCI/NV2A/nv2a.h" // For NV2ADevice
+#include "PCI/MCPXDevice.h" // For MCPXDevice
+#include "PCI/AC97/AC97Device.h"
 #include "x86\IX86CPU.h"
 #include "I8259.h"
 #include "I8254.h"
@@ -91,6 +92,7 @@ public:
 	void RunFrame();
 
 	// Hardware Devices
+	// TODO: Replace this with a generic interface?
 	auto GetCPU() { return m_pCPU; };
 	auto GetPIC() { return m_pPIC; };
 	auto GetPIT() { return m_pPIT; };
@@ -102,6 +104,7 @@ public:
 	auto GetNVNet() { return m_pNVNet; };
 	auto GetNV2A() { return m_PNV2A; };
 	auto GetADM1032() { return m_pADM1032; };
+	auto GetAC97Device() { return m_pAC97; };
 
 	// Configuration Info
 	TVEncoder GetTVEncoderType();
@@ -122,17 +125,19 @@ private:
 	HardwareModel m_HardwareModel;
 
 	// Hardware Devices
+	// TODO: Replace this with a Map, access via GetDevice functions?
 	IX86CPU* m_pCPU;
 	I8259* m_pPIC;
 	I8254* m_pPIT;
 	PCIBus* m_pPCIBus;
 	SMBus* m_pSMBus;
-	MCPXDevice* m_pMCPX;
 	SMCDevice* m_pSMC;
 	EEPROMDevice* m_pEEPROM;
 	NVNetDevice* m_pNVNet;
 	NV2ADevice* m_PNV2A;
 	ADM1032Device* m_pADM1032;
+	MCPXDevice* m_pMCPX;
+	AC97Device* m_pAC97;
 
 	// Other
 	uint8_t* m_pPhysicalMemory = nullptr;

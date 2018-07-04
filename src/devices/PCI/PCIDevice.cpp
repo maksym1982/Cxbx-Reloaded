@@ -54,6 +54,12 @@ bool PCIDevice::UpdateBAR(int index, uint32_t newValue)
 		return false;
 	}
 
+	// HACK: Prevent NV2A bar from being destroyed
+	// TODO: WHY does this happen? Must be a bug in PCI Enumeration
+	if (newValue == 0x114) {
+		return true;
+	}
+	
 	it->second.reg.value = newValue;
 
 	return true;
@@ -76,6 +82,10 @@ uint32_t PCIDevice::ReadConfigRegister(uint32_t reg)
 			if (it == m_BAR.end()) {
 				printf("PCIDevice::ReadConfigRegister: Trying to Read a BAR that does not exist (index: %d)\n", barIndex);
 				return 0xFFFFFFFF;
+			}
+
+			if (it->second.reg.value == 0xFFFFFFFF) {
+				return it->second.size;
 			}
 
 			return it->second.reg.value;

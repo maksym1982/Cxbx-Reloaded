@@ -38,6 +38,8 @@
 #include "CxbxKrnl\CxbxKrnl.h"
 #include "CxbxKrnl\LibRc4.h" 
 
+#define PORT_HW_MONITOR_PIN 0x80CF	// Used to monitor boot status
+
 MCPXRevision Xbox::GetMCPXRevision()
 {
 	switch (m_HardwareModel) {
@@ -125,6 +127,7 @@ void Xbox::InitHardware(HardwareModel hardwareModel, IX86CPU* cpu)
 	m_pNVNet = new NVNetDevice();
 	m_PNV2A = new NV2ADevice(this);
 	m_pADM1032 = new ADM1032Device();
+	m_pAC97 = new AC97Device(this);
 
 	// Connect devices to SM bus
 	m_pSMBus->ConnectDevice(SMBUS_ADDRESS_SYSTEM_MICRO_CONTROLLER, m_pSMC); // W 0x20 R 0x21
@@ -148,10 +151,10 @@ void Xbox::InitHardware(HardwareModel hardwareModel, IX86CPU* cpu)
 
 	// Connect devices to PCI bus
 	m_pPCIBus->ConnectDevice(PCI_DEVID(0, PCI_DEVFN(1, 1)), m_pSMBus);
-	m_pPCIBus->ConnectDevice(PCI_DEVID(0, PCI_DEVFN(4, 0)), m_pNVNet);
+	//m_pPCIBus->ConnectDevice(PCI_DEVID(0, PCI_DEVFN(4, 0)), m_pNVNet); // TODO: Why does this cause an access violation in GetMMIOBar? Memory Corruption?
 	//m_pPCIBus->ConnectDevice(PCI_DEVID(0, PCI_DEVFN(4, 1)), m_pMCPX); // MCPX device ID = 0x0808 ?
-	//m_pPCIBus->ConnectDevice(PCI_DEVID(0, PCI_DEVFN(5, 0)), g_NVAPU);
-	//m_pPCIBus->ConnectDevice(PCI_DEVID(0, PCI_DEVFN(6, 0)), g_AC97);
+	//m_pPCIBus->ConnectDevice(PCI_DEVID(0, PCI_DEVFN(5, 0)), m_NVAPU);
+	m_pPCIBus->ConnectDevice(PCI_DEVID(0, PCI_DEVFN(6, 0)), m_pAC97);
 	m_pPCIBus->ConnectDevice(PCI_DEVID(1, PCI_DEVFN(0, 0)), m_PNV2A);
 
 	// TODO : Handle other SMBUS Addresses, like PIC_ADDRESS, XCALIBUR_ADDRESS
@@ -166,7 +169,7 @@ void Xbox::InitHardware(HardwareModel hardwareModel, IX86CPU* cpu)
 	}
 
 	m_PhysicalMemorySize = 128 * ONE_MB;
-	m_pPhysicalMemory = (uint8_t*)malloc(m_PhysicalMemorySize);
+	m_pPhysicalMemory = (uint8_t*)calloc(m_PhysicalMemorySize, 1);
 	if (m_pPhysicalMemory == nullptr) {
 		CxbxKrnlCleanup("Failed to allocate Physical Memory");
 	}
@@ -415,6 +418,8 @@ bool Xbox::IORead(const uint32_t addr, uint32_t &value, const size_t size)
 
 bool Xbox::IOWrite(const uint32_t addr, const uint32_t value, const size_t size)
 {
+	static int hw_monitor_pulse_count = 0;
+
 	switch (addr) {
 		case PORT_PIT_DATA_0:
 		case PORT_PIT_DATA_1:
@@ -429,6 +434,11 @@ bool Xbox::IOWrite(const uint32_t addr, const uint32_t value, const size_t size)
 		case PORT_PIC_MASTER_ELCR:
 		case PORT_PIC_SLAVE_ELCR:
 			m_pPIC->IOWrite(addr, value);
+			return true;
+		case PORT_HW_MONITOR_PIN:
+			if (value == 0x05) {
+				printf("PORT_HW_MONITOR_PIN_PULSE #%d\n", ++hw_monitor_pulse_count);
+			}
 			return true;
 		default:
 			// Pass the IO Write to the PCI Bus, this will handle devices with BARs set to IO addresses

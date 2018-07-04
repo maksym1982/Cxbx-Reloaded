@@ -1,7 +1,7 @@
 #ifndef _SMBUS_H_
 #define _SMBUS_H_
 
-#include "PCIDevice.h"
+#include "devices/PCI/PCIDevice.h"
 #include "SMDevice.h"
 
 #include <map>
@@ -66,10 +66,10 @@ class SMBus : public PCIDevice {
 		void ConnectDevice(uint8_t addr, SMDevice *device);
 
 	private:
-		uint8_t m_Status;
-		uint8_t m_Control;
+		uint16_t m_Status;
+		uint16_t m_Control;
 		uint8_t m_Command;
-		uint8_t m_Address;
+		uint16_t m_Address;
 		uint8_t m_Data0;
 		uint8_t m_Data1;
 		uint8_t m_Data[32];

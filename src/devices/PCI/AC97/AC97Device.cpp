@@ -1,3 +1,5 @@
+// This is an open source non-commercial project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 // ******************************************************************
 // *
 // *    .,-:::::    .,::      .::::::::.    .,::      .:
@@ -6,8 +8,6 @@
 // *  $$$              Y$$$P     $$""""Y$$     Y$$$P
 // *  `88bo,__,o,    oP"``"Yo,  _88o,,od8P   oP"``"Yo,
 // *    "YUMMMMMP",m"       "Mm,""YUMMMP" ,m"       "Mm,
-// *
-// *   src->devices->I8259.h
 // *
 // *  This file is part of the Cxbx project.
 // *
@@ -28,71 +28,59 @@
 // *
 // *  (c) 2018 Luke Usher
 // *
-// *  Based on QEMU 8259 interrupt controller emulation
-// *  (c) 2003-2004 Fabrice Bellard
-// *
 // *  All rights reserved
 // *
 // ******************************************************************
 
-#ifndef _PIC_H_
-#define _PIC_H_
+#include "AC97Device.h"
+#include "devices\Xbox.h"
 
-#include <cstdint>
-
-#define PORT_PIC_MASTER_COMMAND 0x20
-#define PORT_PIC_MASTER_DATA 0x21
-#define PORT_PIC_SLAVE_COMMAND 0xA0
-#define PORT_PIC_SLAVE_DATA 0xA1
-#define PORT_PIC_MASTER_ELCR 0x4D0
-#define PORT_PIC_SLAVE_ELCR 0x4D1
-
-#define PIC_MASTER	0
-#define PIC_SLAVE	1
-
-class Xbox;
-
-class I8259 
+AC97Device::AC97Device(Xbox* pXbox)
 {
-	public:
-		I8259(Xbox *pXbox);
-		void Reset();
+	m_pXbox = pXbox;
+}
 
-		uint32_t IORead(uint32_t addr);
-		void IOWrite(uint32_t addr, uint32_t value);
+void AC97Device::Init()
+{
+	PCIBarRegister r;
+	r.IO.address = 0xD000;
+	r.Raw.type = PCI_BAR_TYPE_IO;
+	RegisterBAR(0, 256, r.value);
 
-		void RaiseIRQ(int index);
-		void LowerIRQ(int index);
+	r.IO.address = 0xD200;
+	r.Raw.type = PCI_BAR_TYPE_IO;
+	RegisterBAR(1, 128, r.value);
 
-		int GetCurrentIRQ();
-	private:
-		Xbox *m_pXbox;
+	r.IO.address = 0xFEC00000 >> 4;
+	r.Raw.type = PCI_BAR_TYPE_MEMORY;
+	RegisterBAR(2, 4096, r.value);
 
-		uint8_t m_PreviousIRR[2];	// used for edge-detection
-		uint8_t m_IRR[2];
-		uint8_t m_IMR[2];	
-		uint8_t m_ISR[2];
-		uint8_t m_Base[2];
-		uint8_t m_ReadRegisterSelect[2];
-		uint8_t m_SpecialMask[2];
-		uint8_t m_InitState[2];
-		uint8_t m_ELCR[2];
-		uint8_t m_ELCRMask[2];
-		uint8_t m_PriorityAdd[2];
+//	m_DeviceId = ?;
+	m_VendorId = PCI_VENDOR_ID_NVIDIA;
+}
 
-		bool m_Poll[2];
-		bool m_RotateOnAutoEOI[2];
-		bool m_Is4ByteInit[2];
-		bool m_AutoEOI[2];
-		bool m_IsSpecialFullyNestedMode[2];
+void AC97Device::Reset()
+{
+}
 
-		void AcknowledgeIRQ(int pic, int index);
-		int GetIRQ(int pic);
-		void SetIRQ(int pic, int index, bool value);
-		int GetPriority(int pic, uint8_t mask);
-		uint8_t Poll(int pic, uint32_t addr);
-		void Reset(int pic);
-		void UpdateIRQ();
-};
+uint32_t AC97Device::IORead(int barIndex, uint32_t port, unsigned size)
+{
+	printf("AC97: IORead\n");
+	return 0;
+}
 
-#endif
+void AC97Device::IOWrite(int barIndex, uint32_t port, uint32_t value, unsigned size)
+{
+	printf("AC97: IOWrite\n");
+}
+
+uint32_t AC97Device::MMIORead(int barIndex, uint32_t addr, unsigned size)
+{
+	printf("AC97: MMIORead\n");
+	return 0;
+}
+
+void AC97Device::MMIOWrite(int barIndex, uint32_t addr, uint32_t value, unsigned size)
+{
+	printf("AC97: MMIOWrite\n");
+}

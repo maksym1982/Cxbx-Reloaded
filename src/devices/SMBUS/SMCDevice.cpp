@@ -43,7 +43,7 @@ namespace xboxkrnl
 
 #include "CxbxKrnl\CxbxKrnl.h"
 #include "CxbxKrnl\EmuShared.h"
-#include "Xbox.h"
+#include "devices\Xbox.h"
 #include "LED.h"
 
 void SetLEDSequence(LED::Sequence aLEDSequence)

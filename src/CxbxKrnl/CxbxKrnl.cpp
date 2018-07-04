@@ -67,9 +67,9 @@ namespace xboxkrnl
 #include <time.h> // For time()
 #include <sstream> // For std::ostringstream
 
-#include "devices\EEPROMDevice.h" // For g_EEPROM
+#include "devices\SMBus\EEPROMDevice.h" // For g_EEPROM
 #include "devices\Xbox.h" // For InitXboxHardware()
-#include "devices\LED.h" // For LED::Sequence
+#include "devices\SMBus\LED.h" // For LED::Sequence
 #include "EmuSha.h" // For the SHA1 functions
 
 // Define Xbox class (contains all Xbox relateds hardware, memory functions, etc)

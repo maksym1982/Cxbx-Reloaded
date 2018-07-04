@@ -55,7 +55,7 @@ namespace xboxkrnl
 #include "EmuFile.h" // For FindNtSymbolicLinkObjectByDriveLetter
 #include "Common\EmuEEPROM.h" // For EEPROM
 #include "devices\Xbox.h" // For g_SMBus, SMBUS_ADDRESS_SYSTEM_MICRO_CONTROLLER
-#include "devices\SMCDevice.h" // For SMC_COMMAND_SCRATCH
+#include "devices\SMBUS\SMCDevice.h" // For SMC_COMMAND_SCRATCH
 
 #include <algorithm> // for std::replace
 #include <locale>

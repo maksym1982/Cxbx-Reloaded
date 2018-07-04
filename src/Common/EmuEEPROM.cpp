@@ -47,7 +47,7 @@ namespace xboxkrnl
 #include "Cxbx.h" // For DbgPrintf
 #include "EmuEEPROM.h" // For EEPROMInfo, EEPROMInfos
 #include "..\CxbxKrnl\Emu.h" // For EmuWarning
-#include "..\..\src\devices\LED.h" // For SetLEDSequence
+#include "devices/SMBUS/LED.h" // For SetLEDSequence
 #include "..\CxbxKrnl\CxbxKrnl.h"
 
 xboxkrnl::XBOX_EEPROM *EEPROM = nullptr; // Set using CxbxRestoreEEPROM()

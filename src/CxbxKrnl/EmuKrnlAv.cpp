@@ -58,7 +58,7 @@ namespace NtDll
 #include "EmuX86.h"
 
 #include "EmuKrnlAvModes.h"
-#include "devices\video\nv2a_int.h"
+#include "devices\PCI\NV2A\nv2a_int.h"
 
 #ifndef VOID
 #define VOID void

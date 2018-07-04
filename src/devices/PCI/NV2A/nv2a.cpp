@@ -29,7 +29,7 @@
 // *  59 Temple Place - Suite 330, Bostom, MA 02111-1307, USA.
 // *
 // *  (c) 2002-2003 Aaron Robinson <caustik@caustik.com>
-// * 
+// *
 // *  nv2a.cpp is heavily based on code from XQEMU
 // *  Copyright(c) 2012 espes
 // *  Copyright(c) 2015 Jannik Vogel
@@ -652,7 +652,7 @@ void NV2ADevice::UpdateHostDisplay(NV2AState *d)
 		static const GLenum gl_overlay_internal_format = GL_RGBA8;
 		static const GLenum gl_overlay_format = GL_BGRA;
 		static const GLenum gl_overlay_type = GL_UNSIGNED_BYTE;
-			   
+
 		hwaddr overlay_pixels = /*CONTIGUOUS_MEMORY_BASE=*/0x80000000 | overlay_offset;
 		if (overlay_texture == -1) {
 			glGenTextures(1, &overlay_texture);
@@ -661,7 +661,7 @@ void NV2ADevice::UpdateHostDisplay(NV2AState *d)
 			glTexImage2D(GL_TEXTURE_2D, 0, gl_overlay_internal_format, overlay_pitch / 4, overlay_in_height, 0, gl_overlay_format, gl_overlay_type, (void*)overlay_pixels);
 		}
 		else {
-			glBindTexture(GL_TEXTURE_2D, overlay_texture); // update the YUV video texturing unit 
+			glBindTexture(GL_TEXTURE_2D, overlay_texture); // update the YUV video texturing unit
 			glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, overlay_pitch / 4, overlay_in_height, gl_overlay_format, gl_overlay_type, (void*)overlay_pixels);
 		}
 
@@ -707,7 +707,7 @@ void NV2ADevice::UpdateHostDisplay(NV2AState *d)
 
 		glUseProgram(Get_YUV_to_RGB_shader_program());
 
-		// Attach texture #0 to the shader sampler location 
+		// Attach texture #0 to the shader sampler location
 		glUniform1i(yuyv_tex_loc, 0);
 
 		// Feed screen coordinates through a vertex buffer object
@@ -719,7 +719,7 @@ void NV2ADevice::UpdateHostDisplay(NV2AState *d)
 		};
 		static GLuint vertexbuffer = -1;
 		if (vertexbuffer == -1) {
-			glGenBuffers(1, &vertexbuffer);	
+			glGenBuffers(1, &vertexbuffer);
 		}
 		glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
 		glBufferData(GL_ARRAY_BUFFER, sizeof(vertex_buffer_data), vertex_buffer_data, GL_STREAM_DRAW);
@@ -871,7 +871,7 @@ void NV2ADevice::Init()
 
 	d->pcrtc.start = 0;
 
-	d->vram_ptr = (uint8_t*)PHYSICAL_MAP_BASE;
+	d->vram_ptr = (uint8_t*)g_pXbox->GetPhysicalMemoryPtr(0);
 	d->vram_size = g_SystemMaxMemory;
 
 	d->pramdac.core_clock_coeff = 0x00011c01; /* 189MHz...? */
@@ -887,9 +887,9 @@ void NV2ADevice::Init()
 	pgraph_init(m_nv2a_state);
 
 	// Only spawn VBlank thread when LLE is enabled
-	if (bLLE_GPU) {
+	//if (bLLE_GPU) {
 		vblank_thread = std::thread(nv2a_vblank_thread, d);
-	}
+	//}
 
 	d->pfifo.puller_thread = std::thread(pfifo_puller_thread, d);
 }
@@ -911,30 +911,31 @@ uint32_t NV2ADevice::MMIORead(int barIndex, uint32_t addr, unsigned size)
 { 
 
 	switch (barIndex) {
-	case 0: {
-		// Access NV2A regardless weither HLE is disabled or not (ignoring bLLE_GPU)
-		const NV2ABlockInfo* block = EmuNV2A_Block(addr);
+		case 0: {
+			// Access NV2A regardless weither HLE is disabled or not (ignoring bLLE_GPU)
+			const NV2ABlockInfo* block = EmuNV2A_Block(addr);
 
-		if (block != nullptr) {
-			switch (size) {
-			case sizeof(uint8_t) :
-				return block->ops.read(m_nv2a_state, addr - block->offset) & 0xFF;
-			case sizeof(uint16_t) :
-				assert((addr & 1) == 0); // TODO : What if this fails?	
+			if (block != nullptr) {
+				switch (size) {
+				case sizeof(uint8_t) :
+					return block->ops.read(m_nv2a_state, addr - block->offset) & 0xFF;
+				case sizeof(uint16_t) :
+					assert((addr & 1) == 0); // TODO : What if this fails?
 
-				return block->ops.read(m_nv2a_state, addr - block->offset) & 0xFFFF;
-			case sizeof(uint32_t) :
-				assert((addr & 3) == 0); // TODO : What if this fails?	
+					return block->ops.read(m_nv2a_state, addr - block->offset) & 0xFFFF;
+				case sizeof(uint32_t) :
+					assert((addr & 3) == 0); // TODO : What if this fails?
 
-				return block->ops.read(m_nv2a_state, addr - block->offset);
+					return block->ops.read(m_nv2a_state, addr - block->offset);
+				}
 			}
+			break;
 		}
-		break;
-	}
-	case 1: {
-		// TODO : access physical memory
-		break;
-	}
+		case 1: {
+			// TODO : access physical memory
+			EmuWarning("NV2ADevice::MMIORead: Physical memory not implemented\n");
+			break;
+		}
 	}
 
 	EmuWarning("NV2ADevice::MMIORead: Unhandled barIndex %d, addr %08X, size %d", barIndex, addr, size);
@@ -944,47 +945,48 @@ uint32_t NV2ADevice::MMIORead(int barIndex, uint32_t addr, unsigned size)
 void NV2ADevice::MMIOWrite(int barIndex, uint32_t addr, uint32_t value, unsigned size)
 {
 	switch (barIndex) {
-	case 0: {
-		// Access NV2A regardless whether HLE is disabled or not (ignoring bLLE_GPU)
-		const NV2ABlockInfo* block = EmuNV2A_Block(addr);
+		case 0: {
+			// Access NV2A regardless whether HLE is disabled or not (ignoring bLLE_GPU)
+			const NV2ABlockInfo* block = EmuNV2A_Block(addr);
 
-		if (block != nullptr) {
-			xbaddr aligned_addr;
-			uint32_t aligned_value;
-			int shift;
-			uint32_t mask;
+			if (block != nullptr) {
+				xbaddr aligned_addr;
+				uint32_t aligned_value;
+				int shift;
+				uint32_t mask;
 
-			switch (size) {
-			case sizeof(uint8_t) :
-				aligned_addr = addr & ~3;
-				aligned_value = block->ops.read(m_nv2a_state, aligned_addr - block->offset);
-				shift = (addr & 3) * 8;
-				mask = 0xFF << shift;
-				block->ops.write(m_nv2a_state, aligned_addr - block->offset, (aligned_value & ~mask) | (value << shift));
-				return;
-			case sizeof(uint16_t) :
-				assert((addr & 1) == 0); // TODO : What if this fails?				
+				switch (size) {
+				case sizeof(uint8_t) :
+					aligned_addr = addr & ~3;
+					aligned_value = block->ops.read(m_nv2a_state, aligned_addr - block->offset);
+					shift = (addr & 3) * 8;
+					mask = 0xFF << shift;
+					block->ops.write(m_nv2a_state, aligned_addr - block->offset, (aligned_value & ~mask) | (value << shift));
+					return;
+				case sizeof(uint16_t) :
+					assert((addr & 1) == 0); // TODO : What if this fails?
 
-				aligned_addr = addr & ~3;
-				aligned_value = block->ops.read(m_nv2a_state, aligned_addr - block->offset);
-				shift = (addr & 2) * 16;
-				mask = 0xFFFF << shift;				
-				block->ops.write(m_nv2a_state, aligned_addr - block->offset, (aligned_value & ~mask) | (value << shift));
-				return;
-			case sizeof(uint32_t) :
-				assert((addr & 3) == 0); // TODO : What if this fails?	
+					aligned_addr = addr & ~3;
+					aligned_value = block->ops.read(m_nv2a_state, aligned_addr - block->offset);
+					shift = (addr & 2) * 16;
+					mask = 0xFFFF << shift;
+					block->ops.write(m_nv2a_state, aligned_addr - block->offset, (aligned_value & ~mask) | (value << shift));
+					return;
+				case sizeof(uint32_t) :
+					assert((addr & 3) == 0); // TODO : What if this fails?
 
-				block->ops.write(m_nv2a_state, addr - block->offset, value);
-				return;
+					block->ops.write(m_nv2a_state, addr - block->offset, value);
+					return;
+				}
 			}
-		}
 
-		break;	
-	}
-	case 1: {
-		// TODO : access physical memory
-		break;
-	}
+			break;
+		}
+		case 1: {
+			// TODO : access physical memory
+			EmuWarning("NV2ADevice::MMIOWrite: Physical memory not implemented\n");
+			break;
+		}
 	}
 
 	EmuWarning("NV2ADevice::MMIOWrite: Unhandled barIndex %d, addr %08X, value %08X, size %d", barIndex, addr, value, size);

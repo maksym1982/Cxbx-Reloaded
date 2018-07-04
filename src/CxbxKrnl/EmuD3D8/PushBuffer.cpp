@@ -43,8 +43,8 @@
 #include "CxbxKrnl/EmuXTL.h"
 #include "CxbxKrnl/EmuD3D8Types.h" // For X_D3DFORMAT
 #include "CxbxKrnl/ResourceTracker.h"
-#include "devices/video/nv2a.h" // For PGRAPHState
-#include "devices/video/nv2a_int.h" // For NV** defines
+#include "devices/PCI/NV2A/nv2a.h" // For PGRAPHState
+#include "devices/PCI/NV2A/nv2a_int.h" // For NV** defines
 #include "Logging.h"
 
 // TODO: Find somewhere to put this that doesn't conflict with XTL::

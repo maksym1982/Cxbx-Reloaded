@@ -41,7 +41,7 @@
 #endif
 
 #include "Cxbx.h" // For xbaddr
-#include "devices\PCIDevice.h" // For PCIDevice
+#include "devices\PCI\PCIDevice.h" // For PCIDevice
 
 #include <queue>
 #include <thread>
