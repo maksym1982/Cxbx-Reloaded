@@ -92,6 +92,9 @@ class CxbxVertexBufferConverter
 
         // Patches the types of the stream
         void ConvertStream(CxbxDrawContext *pPatchDesc, UINT uiStream);
+
+		// Performs the actual patching
+		void PatchStream(CxbxVertexShaderStreamInfo *pVertexShaderStreamInfo, uint uiVertexCount, uint8_t* pXboxVertexData, uint uiXboxVertexStride, uint8_t* pHostVertexData, uint uiHostVertexStride);
 };
 
 // inline vertex buffer emulation
