@@ -83,8 +83,7 @@ void XTL::EmuUpdateDeferredStates()
     }
 
     // Certain D3DRS values need to be checked on each Draw[Indexed]Vertices
-	// Note: This can be removed once unpatched SetStateVB and SetStateUp work correctly
-	// Currently, calling these patches fails for unknown reasons.
+	// TODO: Move these to read from NV2A state too
     if(EmuD3DDeferredRenderState != 0)
     {
         if(XTL::EmuD3DDeferredRenderState[0] != X_D3DRS_UNK)
