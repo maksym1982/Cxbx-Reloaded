@@ -38,12 +38,15 @@
 
 #include "CxbxKrnl/Emu.h"
 #include "CxbxKrnl/EmuXTL.h"
+#include "devices/video/nv2a.h"
 
 // deferred state lookup tables
 DWORD *XTL::EmuD3DDeferredRenderState = nullptr;
 DWORD *XTL::EmuD3DDeferredTextureState = nullptr;
 
 extern uint32 g_BuildVersion;
+extern NV2ADevice* g_NV2A;
+extern int g_iWireframe;
 
 // ******************************************************************
 // * patch: UpdateDeferredStates
@@ -52,7 +55,36 @@ void XTL::EmuUpdateDeferredStates()
 {
     using namespace XTL;
 
+	// Prevent a crash during shutdown when g_NV2A gets deleted
+	if (g_NV2A == nullptr) {
+		return;
+	}
+
+    static auto pNV2AState = g_NV2A->GetDeviceState();
+    static auto pPGRAPH = &pNV2AState->pgraph;
+
+    uint32_t setupraster = pPGRAPH->regs[NV_PGRAPH_SETUPRASTER];
+
+    // Fill Mode
+    {
+        // Set default fill mode based on WireFrame Setting
+        // If WireFrame is disabled, this will be overwritten by the switch/case below
+        DWORD FillMode = g_iWireframe == 1 ? D3DFILL_WIREFRAME : D3DFILL_POINT;
+
+        if (g_iWireframe == 0) {
+            switch (GET_MASK(setupraster, NV_PGRAPH_SETUPRASTER_FRONTFACEMODE)) {
+                case NV_PGRAPH_SETUPRASTER_FRONTFACEMODE_POINT: FillMode = D3DFILL_POINT; break;
+                case NV_PGRAPH_SETUPRASTER_FRONTFACEMODE_LINE: FillMode = D3DFILL_WIREFRAME; break;
+                case NV_PGRAPH_SETUPRASTER_FRONTFACEMODE_FILL: FillMode = D3DFILL_SOLID; break;
+            }
+        }
+
+        g_pD3DDevice->SetRenderState(D3DRS_FILLMODE, FillMode);
+    }
+
     // Certain D3DRS values need to be checked on each Draw[Indexed]Vertices
+	// Note: This can be removed once unpatched SetStateVB and SetStateUp work correctly
+	// Currently, calling these patches fails for unknown reasons.
     if(EmuD3DDeferredRenderState != 0)
     {
         if(XTL::EmuD3DDeferredRenderState[0] != X_D3DRS_UNK)
@@ -165,29 +197,29 @@ void XTL::EmuUpdateDeferredStates()
     // Certain D3DTS values need to be checked on each Draw[Indexed]Vertices
     if(EmuD3DDeferredTextureState != 0)
     {
-        for(int v=0;v<4;v++)
-        {
-            ::DWORD *pCur = &EmuD3DDeferredTextureState[v*32];
+		for (int v = 0; v < 4; v++)
+		{
+			::DWORD *pCur = &EmuD3DDeferredTextureState[v * 32];
 
-            if(pCur[0+Adjust2] != X_D3DTSS_UNK)
-            {
-                if(pCur[0+Adjust2] == 5)
+			if (pCur[0 + Adjust2] != X_D3DTSS_UNK)
+			{
+				if (pCur[0 + Adjust2] == 5)
 					EmuLog(LOG_PREFIX, LOG_LEVEL::WARNING, "ClampToEdge is unsupported (temporarily)");
 				else
 					g_pD3DDevice->SetSamplerState(v, D3DSAMP_ADDRESSU, pCur[0 + Adjust2]);
-            }
+			}
 
-            if(pCur[1+Adjust2] != X_D3DTSS_UNK)
-            {
-                if(pCur[1+Adjust2] == 5)
+			if (pCur[1 + Adjust2] != X_D3DTSS_UNK)
+			{
+				if (pCur[1 + Adjust2] == 5)
 					EmuLog(LOG_PREFIX, LOG_LEVEL::WARNING, "ClampToEdge is unsupported (temporarily)");
 				else
 					g_pD3DDevice->SetSamplerState(v, D3DSAMP_ADDRESSV, pCur[1 + Adjust2]);
-            }
+			}
 
-            if(pCur[2+Adjust2] != X_D3DTSS_UNK)
-            {
-                if(pCur[2+Adjust2] == 5)
+			if (pCur[2 + Adjust2] != X_D3DTSS_UNK)
+			{
+				if (pCur[2 + Adjust2] == 5)
 					EmuLog(LOG_PREFIX, LOG_LEVEL::WARNING, "ClampToEdge is unsupported (temporarily)");
 				else
 					g_pD3DDevice->SetSamplerState(v, D3DSAMP_ADDRESSW, pCur[2 + Adjust2]);
@@ -229,9 +261,9 @@ void XTL::EmuUpdateDeferredStates()
             if(pCur[12-Adjust1] != X_D3DTSS_UNK)
             {
 				// TODO: This would be better split into it's own function, or a lookup array
-				switch (pCur[12 - Adjust1]) 
+				switch (pCur[12 - Adjust1])
 				{
-				case X_D3DTOP_DISABLE: 
+				case X_D3DTOP_DISABLE:
 					g_pD3DDevice->SetTextureStageState(v, D3DTSS_COLOROP, D3DTOP_DISABLE);
 					break;
 				case X_D3DTOP_SELECTARG1:
@@ -422,6 +454,6 @@ void XTL::EmuUpdateDeferredStates()
 					}
                 }
             }
-        }
-    }
+			}
+		}
 }

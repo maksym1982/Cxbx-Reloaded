@@ -133,7 +133,7 @@ static XTL::IDirect3D              *g_pDirect3D = nullptr;
 XTL::D3DCAPS					    g_D3DCaps = {};         // Direct3D Caps
 
 // wireframe toggle
-static int                          g_iWireframe    = 0;
+int									g_iWireframe    = 0;
 
 // build version
 extern uint32						g_BuildVersion;
@@ -222,7 +222,7 @@ g_EmuCDPD = {0};
 
 
 // TODO: This should be a D3DDevice structure
-DWORD* g_XboxD3DDevice;
+DWORD* g_pXboxD3DDevice;
 
 const char *CxbxGetErrorDescription(HRESULT hResult)
 {
@@ -2500,13 +2500,9 @@ HRESULT WINAPI XTL::EMUPATCH(Direct3D_CreateDevice_4)
 	XB_trampoline(HRESULT, WINAPI, Direct3D_CreateDevice_4, (X_D3DPRESENT_PARAMETERS*));
 	HRESULT hRet = XB_Direct3D_CreateDevice_4(pPresentationParameters);
 
-	// Set g_XboxD3DDevice to point to the Xbox D3D Device
-    xbaddr dwD3DDevice = xbnull;
-    if (g_SymbolAddresses.find("D3DDEVICE") != g_SymbolAddresses.end()) {
-        dwD3DDevice = g_SymbolAddresses["D3DDEVICE"];
-    }
-	if (dwD3DDevice != xbnull) {
-		g_XboxD3DDevice = *((DWORD**)dwD3DDevice);
+	// Set g_pXboxD3DDevice to point to the Xbox D3D Device
+	if (g_SymbolAddresses.find("D3DDEVICE") != g_SymbolAddresses.end()) {
+		g_pXboxD3DDevice = *(DWORD**)g_SymbolAddresses["D3DDEVICE"];
 	}
 
 	return hRet;
@@ -2556,10 +2552,9 @@ HRESULT WINAPI XTL::EMUPATCH(Direct3D_CreateDevice_16)
 	XB_trampoline(HRESULT, WINAPI, Direct3D_CreateDevice_16, (UINT, D3DDEVTYPE, HWND, X_D3DPRESENT_PARAMETERS*));
 	HRESULT hRet = XB_Direct3D_CreateDevice_16(Adapter, DeviceType, hFocusWindow, pPresentationParameters);
 
-	// Set g_XboxD3DDevice to point to the Xbox D3D Device
-    xbaddr dwD3DDevice = g_SymbolAddresses["D3DDEVICE"];
-	if (dwD3DDevice != xbnull) {
-		g_XboxD3DDevice = *((DWORD**)dwD3DDevice);
+	// Set g_pXboxD3DDevice to point to the Xbox D3D Device
+	if (g_SymbolAddresses.find("D3DDEVICE") != g_SymbolAddresses.end()) {
+		g_pXboxD3DDevice = *(DWORD**)g_SymbolAddresses["D3DDEVICE"];
 	}
 
 	return hRet;
@@ -2634,11 +2629,10 @@ HRESULT WINAPI XTL::EMUPATCH(Direct3D_CreateDevice)
 	XB_trampoline(HRESULT, WINAPI, Direct3D_CreateDevice, (UINT, D3DDEVTYPE, HWND, DWORD, X_D3DPRESENT_PARAMETERS*, IDirect3DDevice**));
 	HRESULT hRet = XB_Direct3D_CreateDevice(Adapter, DeviceType, hFocusWindow, BehaviorFlags, pPresentationParameters, ppReturnedDeviceInterface);
 
-	// Set g_XboxD3DDevice to point to the Xbox D3D Device
-    xbaddr dwD3DDevice = g_SymbolAddresses["D3DDEVICE"];
-	if (dwD3DDevice != xbnull) {
-		g_XboxD3DDevice = *((DWORD**)dwD3DDevice);
-	}
+	// Set g_pXboxD3DDevice to point to the Xbox D3D Device
+    if (g_SymbolAddresses.find("D3DDEVICE") != g_SymbolAddresses.end()) {
+		g_pXboxD3DDevice = *(DWORD**)g_SymbolAddresses["D3DDEVICE"];
+    }
 
 	return hRet;
 }
@@ -4419,20 +4413,7 @@ VOID WINAPI XTL::EMUPATCH(D3DDevice_Clear)
             EmuLog(LOG_PREFIX, LOG_LEVEL::WARNING, "Unsupported Flag(s) for D3DDevice_Clear : 0x%.08X", Flags & ~(X_D3DCLEAR_TARGET | X_D3DCLEAR_ZBUFFER | X_D3DCLEAR_STENCIL));
     }
 
-	DWORD dwFillMode;
-
-	if(g_iWireframe == 0)
-        dwFillMode = g_CurrentFillMode;
-    else if(g_iWireframe == 1)
-        dwFillMode = D3DFILL_WIREFRAME;
-    else
-        dwFillMode = D3DFILL_POINT;
-
 	HRESULT hRet;
-
-    hRet = g_pD3DDevice->SetRenderState(D3DRS_FILLMODE, dwFillMode);
-	DEBUG_D3DRESULT(hRet, "g_pD3DDevice->SetRenderState");
-
     hRet = g_pD3DDevice->Clear(Count, pRects, HostFlags, Color, Z, Stencil);
 	DEBUG_D3DRESULT(hRet, "g_pD3DDevice->Clear");
 }
@@ -7285,7 +7266,14 @@ VOID WINAPI XTL::EMUPATCH(D3DDevice_DrawVertices)
 		return;
 	}
 
-	// TODO : Call unpatched D3DDevice_SetStateVB(0);
+	// We can't use XB_Trampoline due to calling convention
+	auto XB_D3DDevice_SetStateVB = GetXboxFunctionPointer("D3DDevice_SetStateVB");
+	// g_pXboxD3DDevice->SetStateVB(0);
+	__asm {
+		mov ecx, g_pXboxD3DDevice
+		push 0
+		call XB_D3DDevice_SetStateVB
+	}
 
 	CxbxUpdateNativeD3DResources();
     if (IsValidCurrentShader()) {
@@ -7384,7 +7372,13 @@ VOID WINAPI XTL::EMUPATCH(D3DDevice_DrawVerticesUP)
 		return;
 	}
 
-	// TODO : Call unpatched D3DDevice_SetStateUP();
+	// We can't use XB_Trampoline due to calling convention
+	auto XB_D3DDevice_SetStateUP = GetXboxFunctionPointer("D3DDevice_SetStateUP");
+	// g_pXboxD3DDevice->SetStateUP();
+	__asm {
+		mov ecx, g_pXboxD3DDevice
+		call XB_D3DDevice_SetStateUP
+	}
 
 	CxbxUpdateNativeD3DResources();
 
@@ -7434,7 +7428,14 @@ VOID WINAPI XTL::EMUPATCH(D3DDevice_DrawIndexedVertices)
 		return;
 	}
 
-	// TODO : Call unpatched D3DDevice_SetStateVB(0);
+	// We can't use XB_Trampoline due to calling convention
+	auto XB_D3DDevice_SetStateVB = GetXboxFunctionPointer("D3DDevice_SetStateVB");
+	// g_pXboxD3DDevice->SetStateVB(g_XboxBaseVertexIndex);
+	__asm {
+		mov ecx, g_pXboxD3DDevice
+		push g_XboxBaseVertexIndex
+		call XB_D3DDevice_SetStateVB
+	}
 
 	CxbxUpdateNativeD3DResources();
 
@@ -7490,7 +7491,13 @@ VOID WINAPI XTL::EMUPATCH(D3DDevice_DrawIndexedVerticesUP)
 		return;
 	}
 
-	// TODO : Call unpatched D3DDevice_SetStateUP();
+	// We can't use XB_Trampoline due to calling convention
+	auto XB_D3DDevice_SetStateUP = GetXboxFunctionPointer("D3DDevice_SetStateUP");
+	// g_pXboxD3DDevice->SetStateUP();
+	__asm {
+		mov ecx, g_pXboxD3DDevice
+		call XB_D3DDevice_SetStateUP
+	}
 
 	CxbxUpdateNativeD3DResources();
 
@@ -8681,33 +8688,6 @@ VOID WINAPI XTL::EMUPATCH(D3DDevice_GetProjectionViewportMatrix)
 //	__asm int 3;
 }
 #pragma warning(default:4244)
-
-// ******************************************************************
-// * patch: D3DDevice_SetStateVB (D3D::CDevice::SetStateVB)
-// ******************************************************************
-VOID WINAPI XTL::EMUPATCH(D3DDevice_SetStateVB)( ULONG Unknown1 )
-{
-	LOG_FUNC_ONE_ARG(Unknown1);
-
-	// TODO: Anything?
-//	__asm int 3;
-
-	LOG_UNIMPLEMENTED();	
-}
-
-// ******************************************************************
-// * patch: D3DDevice_SetStateUP (D3D::CDevice::SetStateUP)
-// ******************************************************************
-VOID WINAPI XTL::EMUPATCH(D3DDevice_SetStateUP)()
-{
-	LOG_FUNC();
-
-	LOG_UNIMPLEMENTED();
-
-	// TODO: Anything?
-//	__asm int 3;
-	
-}
 
 // ******************************************************************
 // * patch: D3DDevice_SetStipple
