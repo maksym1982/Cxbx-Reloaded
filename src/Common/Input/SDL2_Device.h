@@ -36,7 +36,6 @@
 
 #ifndef SDL2DEVICE_H_
 #define SDL2DEVICE_H_
-#if 0 // Reenable this when LLE USB actually works
 #include "InputConfig.h"
 
 
@@ -119,5 +118,4 @@ class SDL2Devices
 		// indicates that the button state has been updated since the last time it was read
 		std::atomic_bool bStateDirty;
 };
-#endif
 #endif

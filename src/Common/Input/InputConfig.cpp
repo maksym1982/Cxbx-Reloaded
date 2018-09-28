@@ -33,7 +33,6 @@
 // *  All rights reserved
 // *
 // ******************************************************************
-#if 0 // Reenable this when LLE USB actually works
 #define _XBOXKRNL_DEFEXTRN_
 #define LOG_PREFIX CXBXR_MODULE::SDL2
 
@@ -466,4 +465,3 @@ SDL2Devices* InputDeviceManager::FindDeviceFromXboxPort(int port)
 	}
 	return nullptr;
 }
-#endif

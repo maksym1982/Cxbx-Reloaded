@@ -1221,14 +1221,12 @@ LRESULT CALLBACK WndMain::WndProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lP
 				RefreshMenus();
 			}
 			break;
-#if 0 // Reenable this when LLE USB actually works
 			case ID_EMULATION_LLE_USB:
 			{
 				g_Settings->m_core.FlagsLLE = g_Settings->m_core.FlagsLLE ^ LLE_USB;
 				RefreshMenus();
 			}
 			break;
-#endif
             case ID_EMULATION_START:
                 if (m_Xbe != nullptr)
                 {
@@ -1710,8 +1708,8 @@ void WndMain::RefreshMenus()
 			chk_flag = (g_Settings->m_core.FlagsLLE & LLE_GPU) ? MF_CHECKED : MF_UNCHECKED;
 			CheckMenuItem(settings_menu, ID_EMULATION_LLE_GPU, chk_flag);
 
-			//chk_flag = (g_Settings->m_core.FlagsLLE & LLE_USB) ? MF_CHECKED : MF_UNCHECKED; // Reenable this when LLE USB actually works
-			//CheckMenuItem(settings_menu, ID_EMULATION_LLE_USB, chk_flag);
+			chk_flag = (g_Settings->m_core.FlagsLLE & LLE_USB) ? MF_CHECKED : MF_UNCHECKED;
+			CheckMenuItem(settings_menu, ID_EMULATION_LLE_USB, chk_flag);
 
 			chk_flag = (g_Settings->m_hacks.DisablePixelShaders) ? MF_CHECKED : MF_UNCHECKED;
 			CheckMenuItem(settings_menu, ID_HACKS_DISABLEPIXELSHADERS, chk_flag);
